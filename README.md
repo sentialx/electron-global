@@ -4,4 +4,4 @@ A complete solution to build a ready for distribution, lightweight Electron app 
 
 # Electron version
 
-electron-runtime will always keep up with the newest global Electron version for all apps, but it will support APIs of up to 2 earlier major versions.
+electron-runtime will always keep up with the newest global Electron version for all apps, but it will support APIs of up to 2 earlier major versions, by providing a thin API layer to make the breaking changes compatible.
