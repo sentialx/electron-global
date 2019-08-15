@@ -64,6 +64,8 @@ export const build = async (baseDir: string, dest: string): Promise<void> => {
       asset.browser_download_url,
     );
 
+    await promises.writeFile(join(dest, 'electron_version'), electronMajor);
+
     const files = await promises.readdir(baseDir);
 
     for (const file of files) {
@@ -76,6 +78,7 @@ export const build = async (baseDir: string, dest: string): Promise<void> => {
     await Promise.all(operations);
     await asar.createPackage(resources, join(dest, 'app.asar'));
     await rimraf(resources);
+    await copy(join(__dirname, '../scripts/darwin.sh'), join(dest, 'run.sh'));
   } catch (e) {
     console.log(e);
   }
