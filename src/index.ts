@@ -5,6 +5,7 @@ import { join } from 'path';
 import { promises } from 'fs';
 import * as rmrf from 'rimraf';
 import * as semver from 'semver';
+import * as phin from 'phin';
 
 import { DEFAULT_EXCLUDE } from './constants';
 
@@ -19,15 +20,17 @@ export const build = async (baseDir: string, dest: string): Promise<void> => {
     const resources = join(dest, 'resources');
     const operations: Promise<any>[] = [];
 
+    await mkdirp(resources);
+
     const pkg = JSON.parse(
       await promises.readFile(join(baseDir, 'package.json'), 'utf8'),
     );
 
-    let electronVersion: string;
+    let electronMajor: number;
 
     if (pkg) {
       if (pkg.devDependencies && pkg.devDependencies.electron) {
-        electronVersion = semver.clean(pkg.devDependencies.electron);
+        electronMajor = semver.minVersion(pkg.devDependencies.electron).major;
       } else {
         throw new Error('Electron should be installed as a dev dependency.');
       }
@@ -37,11 +40,31 @@ export const build = async (baseDir: string, dest: string): Promise<void> => {
       );
     }
 
-    await promises.writeFile(join(dest, 'electron_version'), electronVersion);
+    console.log('Fetching Electron releases...');
+
+    const res = await phin({
+      url: 'https://api.github.com/repos/electron/electron/releases',
+      parse: 'json',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+      },
+    });
+
+    const release = res.body.find((x: any) =>
+      x.tag_name.startsWith(`v${electronMajor}`),
+    );
+
+    const asset = release.assets.find(
+      (x: any) => x.name === `electron-${release.tag_name}-darwin-x64.zip`,
+    );
+
+    await promises.writeFile(
+      join(dest, 'electron_url'),
+      asset.browser_download_url,
+    );
 
     const files = await promises.readdir(baseDir);
-
-    await mkdirp(resources);
 
     for (const file of files) {
       if (DEFAULT_EXCLUDE.includes(file) || file === dest) continue;
