@@ -15,8 +15,8 @@ else
   mkdir -p $dir
   cd $dir
 
-  curl -o "electron.zip" $url -L --progress-bar --verbose
+  curl -o "electron.zip" $url -L
   unzip "electron.zip"
 
-  $electron
+  $electron &
 fi
