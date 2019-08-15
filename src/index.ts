@@ -6,6 +6,8 @@ import { promises } from 'fs';
 import * as rmrf from 'rimraf';
 import * as semver from 'semver';
 import * as phin from 'phin';
+import { platform } from 'os';
+import { spawnSync } from 'child_process';
 
 import { DEFAULT_EXCLUDE } from './constants';
 
@@ -14,6 +16,13 @@ const asar = require('asar');
 const rimraf = promisify(rmrf);
 const mkdirp = promisify(mkp);
 const copy = promisify(ncp);
+
+const os = platform();
+const npm = os === 'win32' ? 'npm.cmd' : 'npm';
+
+export const installDependencies = (dir: string): void => {
+  spawnSync(npm, ['install', '--only=prod'], { cwd: dir });
+};
 
 export const build = async (baseDir: string, dest: string): Promise<number> => {
   try {
@@ -51,6 +60,9 @@ export const build = async (baseDir: string, dest: string): Promise<number> => {
     }
 
     await Promise.all(operations);
+
+    installDependencies(resources);
+
     await asar.createPackage(resources, join(dest, 'app.asar'));
     await rimraf(resources);
 
