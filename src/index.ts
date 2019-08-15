@@ -1,13 +1,14 @@
 import { ncp } from 'ncp';
 import * as mkp from 'mkdirp';
 import { promisify } from 'util';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { promises } from 'fs';
 import * as rmrf from 'rimraf';
 import * as semver from 'semver';
 import * as phin from 'phin';
 import { platform } from 'os';
 import { spawnSync } from 'child_process';
+import rebuild from 'electron-rebuild';
 
 import { DEFAULT_EXCLUDE } from './constants';
 
@@ -20,8 +21,12 @@ const copy = promisify(ncp);
 const os = platform();
 const npm = os === 'win32' ? 'npm.cmd' : 'npm';
 
-export const installDependencies = (dir: string): void => {
+export const installDependencies = async (
+  dir: string,
+  electronVersion: string,
+): Promise<void> => {
   spawnSync(npm, ['install', '--only=prod'], { cwd: dir });
+  await rebuild({ buildPath: resolve(dir), electronVersion });
 };
 
 export const build = async (baseDir: string, dest: string): Promise<number> => {
@@ -36,11 +41,11 @@ export const build = async (baseDir: string, dest: string): Promise<number> => {
       await promises.readFile(join(baseDir, 'package.json'), 'utf8'),
     );
 
-    let electronMajor: number;
+    let electronVersion: semver.SemVer;
 
     if (pkg) {
       if (pkg.devDependencies && pkg.devDependencies.electron) {
-        electronMajor = semver.minVersion(pkg.devDependencies.electron).major;
+        electronVersion = semver.minVersion(pkg.devDependencies.electron);
       } else {
         throw new Error('Electron should be installed as a dev dependency.');
       }
@@ -61,12 +66,12 @@ export const build = async (baseDir: string, dest: string): Promise<number> => {
 
     await Promise.all(operations);
 
-    installDependencies(resources);
+    await installDependencies(resources, electronVersion.version);
 
     await asar.createPackage(resources, join(dest, 'app.asar'));
     await rimraf(resources);
 
-    return electronMajor;
+    return electronVersion.major;
   } catch (e) {
     console.log(e);
   }
