@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import program from 'commander';
+import * as program from 'commander';
 
-program.option('-m', '--mac', 'Build for macOS');
+program.option('-m, --mac', 'Build for macOS');
 
 program.parse(process.argv);
 
