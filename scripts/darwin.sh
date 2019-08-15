@@ -1,15 +1,22 @@
-#!/bin/sh
-url=`cat electron_url`
-major=`cat electron_version`
+#!/bin/bash
 
-path = "~/.electron-runtime/$major"
+DIR=$(cd "$(dirname "$0")"; pwd)
 
-if [ -d $path ]; then
+url=`cat $DIR/electron_url`
+major=`cat $DIR/electron_version`
 
+dir="$HOME/.electron-runtime/$major"
+
+electron="$dir/Electron.app/Contents/MacOS/Electron $DIR/app.asar"
+
+if [ -d $dir ]; then
+  $electron &
 else
-  mkdir -p $path
-  cd $path
+  mkdir -p $dir
+  cd $dir
 
-  curl -o "electron.zip" $url -L
+  curl -o "electron.zip" $url -L --progress-bar --verbose
   unzip "electron.zip"
+
+  $electron
 fi
