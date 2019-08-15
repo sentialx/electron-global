@@ -15,9 +15,10 @@ const rimraf = promisify(rmrf);
 const mkdirp = promisify(mkp);
 const copy = promisify(ncp);
 
-export const build = async (baseDir: string, dest: string): Promise<void> => {
+export const build = async (baseDir: string, dest: string): Promise<number> => {
   try {
     const resources = join(dest, 'resources');
+
     const operations: Promise<any>[] = [];
 
     await mkdirp(resources);
@@ -40,32 +41,6 @@ export const build = async (baseDir: string, dest: string): Promise<void> => {
       );
     }
 
-    console.log('Fetching Electron releases...');
-
-    const res = await phin({
-      url: 'https://api.github.com/repos/electron/electron/releases',
-      parse: 'json',
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-      },
-    });
-
-    const release = res.body.find((x: any) =>
-      x.tag_name.startsWith(`v${electronMajor}`),
-    );
-
-    const asset = release.assets.find(
-      (x: any) => x.name === `electron-${release.tag_name}-darwin-x64.zip`,
-    );
-
-    await promises.writeFile(
-      join(dest, 'electron_url'),
-      asset.browser_download_url,
-    );
-
-    await promises.writeFile(join(dest, 'electron_version'), electronMajor);
-
     const files = await promises.readdir(baseDir);
 
     for (const file of files) {
@@ -78,8 +53,51 @@ export const build = async (baseDir: string, dest: string): Promise<void> => {
     await Promise.all(operations);
     await asar.createPackage(resources, join(dest, 'app.asar'));
     await rimraf(resources);
-    await copy(join(__dirname, '../scripts/darwin.sh'), join(dest, 'run.sh'));
+
+    return electronMajor;
   } catch (e) {
     console.log(e);
   }
+
+  return null;
+};
+
+export const buildMac = async (
+  dest: string,
+  version: number,
+): Promise<void> => {
+  const appPath = join(dest, 'App.app/Contents/MacOS');
+
+  await mkdirp(appPath);
+
+  await promises.writeFile(join(appPath, 'electron_version'), version);
+
+  await copy(join(dest, 'app.asar'), join(appPath, 'app.asar'));
+  await rimraf(join(dest, 'app.asar'));
+
+  await copy(join(__dirname, '../scripts/darwin.sh'), join(appPath, 'App'));
+
+  console.log('Fetching Electron releases...');
+
+  const res = await phin({
+    url: 'https://api.github.com/repos/electron/electron/releases',
+    parse: 'json',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    },
+  });
+
+  const release = res.body.find((x: any) =>
+    x.tag_name.startsWith(`v${version}`),
+  );
+
+  const asset = release.assets.find(
+    (x: any) => x.name === `electron-${release.tag_name}-darwin-x64.zip`,
+  );
+
+  await promises.writeFile(
+    join(appPath, 'electron_url'),
+    asset.browser_download_url,
+  );
 };
