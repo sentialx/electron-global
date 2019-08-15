@@ -1,0 +1,25 @@
+{
+  "name": "electron-runtime",
+  "version": "0.0.1",
+  "description": "Tool for building lightweight Electron apps",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sentialx/electron-runtime.git"
+  },
+  "keywords": [
+    "tool",
+    "electron",
+    "runtime",
+    "cli",
+    "lightweight",
+    "builder"
+  ],
+  "author": "sentialx <sentialx@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sentialx/electron-runtime/issues"
+  },
+  "homepage": "https://github.com/sentialx/electron-runtime#readme"
+}
