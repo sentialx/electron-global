@@ -65,6 +65,7 @@ export const createElectronDistMac = async (
       'Frameworks/Electron Helper.app/Contents',
     );
 
+    await mkdirp(dest);
     await mkdirp(join(contentsPath, 'MacOS'));
     await mkdirp(join(helperContentsPath, 'MacOS'));
 
