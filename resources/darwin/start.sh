@@ -2,8 +2,8 @@
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
-url=`cat $DIR/electron_url`
-major=`cat $DIR/electron_version`
+url=`cat $DIR/../Resources/electron_url`
+major=`cat $DIR/../Resources/electron_version`
 
 dir="$HOME/.electron-runtime/$major"
 
