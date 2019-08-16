@@ -22,12 +22,12 @@ $ npm install --save-dev electron-runtime electron-builder
 
 # Usage
 
-You need to create `electron-builder.json` file in your project directory, configure it and specify `electronDist` directory to where the `electron-runtime` generates the custom Electron distributable (default is `./dist/runtime`). Example:
+You need to create `electron-builder.json` file in your project directory, configure it and specify `electronDist` directory to where the `electron-runtime` generates the output (default is `./electron-runtime`). Example:
 
-```json
+```
 {
   ...
-  "electronDist": "./dist/runtime"
+  "electronDist": "./electron-runtime"
   ...
 }
 ```
