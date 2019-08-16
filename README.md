@@ -1,6 +1,6 @@
 # electron-runtime
 
-A tool for building lighweight Electron apps using global Electron instance.
+A tool for building lighweight Electron apps using a global Electron instance.
 
 # How it works?
 
