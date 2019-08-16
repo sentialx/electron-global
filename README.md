@@ -2,6 +2,10 @@
 
 A tool for building lighweight Electron apps using a global Electron instance.
 
+![image](https://user-images.githubusercontent.com/11065386/63189647-b526eb00-c064-11e9-9280-c2148d8ae99e.png)
+
+(`electron-quick-start` repo built with `electron-runtime` and `electron-builder`)
+
 # How it works?
 
 `electron-runtime` creates a custom Electron distributable with a small app launcher which checks the app's `package.json` and downloads corresponding `major` version and the newest in case of `minor` and `patch`. The Electron versions are being saved to:
