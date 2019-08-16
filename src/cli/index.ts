@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
-import { build, buildMac } from '..';
+import { build, buildMac, testBuild } from '..';
 import { DEFAULT_DEST } from '../constants';
 
 program.option('-m, --mac', 'Build for macOS.');
@@ -13,12 +13,12 @@ program.option(
 program.parse(process.argv);
 
 (async function(): Promise<void> {
-  const version = await build(
+  await testBuild(
     program.projectDir ? program.projectDir : process.cwd(),
     DEFAULT_DEST,
   );
 
-  if (program.mac) {
+  /*if (program.mac) {
     buildMac(DEFAULT_DEST, version);
-  }
+  }*/
 })();

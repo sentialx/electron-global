@@ -7,7 +7,7 @@ major=`cat $DIR/electron_version`
 
 dir="$HOME/.electron-runtime/$major"
 
-electron="$dir/Electron.app/Contents/MacOS/Electron $DIR/app.asar"
+electron="$dir/Electron.app/Contents/MacOS/Electron $DIR/../Resources/app.asar"
 
 if [ -d $dir ]; then
   $electron &

@@ -1,2 +1,2 @@
 export const DEFAULT_EXCLUDE = ['.git', 'node_modules'];
-export const DEFAULT_DEST = 'dist';
+export const DEFAULT_DEST = 'runtime';
