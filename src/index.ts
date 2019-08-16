@@ -68,6 +68,7 @@ export const createElectronDistMac = async (
     await mkdirp(dest);
     await mkdirp(join(contentsPath, 'MacOS'));
     await mkdirp(join(helperContentsPath, 'MacOS'));
+    await mkdirp(join(contentsPath, 'Resources'));
 
     const electronVersion = await getElectronVersion(baseDir);
 
