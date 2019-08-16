@@ -12,7 +12,7 @@ program.option(
   'Output path of the created Electron runtime launcher. Defaults to `./dist/runtime`.',
 );
 program.option(
-  '--projectDir, --project',
+  '--projectDir, --project <path>',
   'The path to project directory. Defaults to current working directory.',
 );
 
