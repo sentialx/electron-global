@@ -72,7 +72,7 @@ export const createElectronDistMac = async (
     const electronVersion = await getElectronVersion(baseDir);
 
     await promises.writeFile(
-      join(contentsPath, 'MacOS/electron_version'),
+      join(contentsPath, 'Resources/electron_version'),
       electronVersion.major,
     );
 
@@ -83,7 +83,7 @@ export const createElectronDistMac = async (
 
     const url = await getElectronURL(electronVersion.major);
 
-    await promises.writeFile(join(contentsPath, 'MacOS/electron_url'), url);
+    await promises.writeFile(join(contentsPath, 'Resources/electron_url'), url);
 
     await Promise.all([
       copy(

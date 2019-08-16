@@ -9,7 +9,7 @@ program.option('-l, --linux', 'Create Electron dist for Linux.');
 program.option('-w, --windows', 'Create Electron dist for Windows.');
 program.option(
   '-o, --output <path>',
-  'Output path of the created Electron runtime launcher. Defaults to `./dist/runtime`.',
+  'Output path of the created Electron runtime launcher. Defaults to `./electron-runtime`.',
 );
 program.option(
   '--projectDir, --project <path>',
