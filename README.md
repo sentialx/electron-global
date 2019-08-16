@@ -1,12 +1,52 @@
 # electron-runtime
 
-A complete solution to build a ready for distribution, lightweight Electron app for Windows, macOS and Linux with auto updater support. Instead of bundling Electron with each app, electron-runtime will use a global installation of the corresponding Electron major version.
+A tool for building lighweight Electron apps using global Electron instance.
 
-# Electron version
+# How it works?
 
-`electron-runtime` checks the app's `package.json` and downloads corresponding major version, minor and patch versions are ignored. The Electron versions are being saved to:
+`electron-runtime` creates a custom Electron distributable with a small app launcher which checks the app's `package.json` and downloads corresponding `major` version and the newest in case of `minor` and `patch`. The Electron versions are being saved to:
 
-The `x` is major version of Electron, for example 6
 - on macOS and Linux: `~/.electron-runtime/x`
 
-Everytime an Electron app packaged with `electron-runtime` starts, it checks in the background process if there's any newer Electron version regarding `minor` and `patch` (WIP).
+Where `x` is the major version of Electron (e.g. 6).
+
+Then the distributable can be used with [`electron-builder`](https://github.com/electron-userland/electron-builder) to build the app installers.
+
+# Installation
+
+The [`electron-builder`](https://github.com/electron-userland/electron-builder) package is also required to successfully build an app.
+
+```
+$ npm install --save-dev electron-runtime electron-builder
+```
+
+# Usage
+
+You need to create `electron-builder.json` file in your project directory, configure it and specify `electronDist` directory to where the `electron-runtime` generates the custom Electron distributable (default is `./dist/runtime`). Example:
+
+```json
+{
+  ...
+  "electronDist": "./dist/runtime"
+  ...
+}
+```
+
+Then you can run the following command (example for macOS):
+
+```
+$ electron-runtime -m && electron-builder -m
+```
+
+## CLI Options:
+```
+Usage: electron-runtime [options]
+
+Options:
+  -m, --mac                Create Electron dist for macOS.
+  -l, --linux              Create Electron dist for Linux.
+  -w, --windows            Create Electron dist for Windows.
+  -o, --output <path>      Output path of the created Electron runtime launcher. Defaults to `./dist/runtime`.
+  --projectDir, --project  The path to project directory. Defaults to current working directory.
+  -h, --help               output usage information
+```
