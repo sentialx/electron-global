@@ -1,0 +1,12 @@
+[submodule "src/lib/libui"]
+	path = src/lib/libui
+	url = https://github.com/andlabs/libui
+[submodule "src/lib/curl"]
+	path = src/lib/curl
+	url = https://github.com/curl/curl
+[submodule "src/lib/zip"]
+	path = src/lib/zip
+	url = https://github.com/kuba--/zip
+[submodule "src/lib/semver.c"]
+	path = src/lib/semver.c
+	url = https://github.com/h2non/semver.c
