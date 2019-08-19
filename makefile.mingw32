@@ -10,7 +10,7 @@ OBJ_DIR        = obj/mingw32
 all: electron-launcher.exe
 
 electron-launcher.exe: $(OBJ_DIR)/main.o $(OBJ_DIR)/resources.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a $(OBJ_DIR)/libcurl.a
-	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -std=c++17 -o electron-launcher.exe
+	$(CXX) -std=c++17 $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o electron-launcher.exe -lstdc++fs
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)

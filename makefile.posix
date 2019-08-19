@@ -17,7 +17,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 $(OBJ_DIR)/main.o: src/main.cpp | $(OBJ_DIR)
-	$(CXX) -std=c++17 $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp -lstdc++fs
+	$(CXX) $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp
 
 $(OBJ_DIR)/zip.o: src/lib/zip/src/zip.c src/lib/zip/src/zip.h src/lib/zip/src/miniz.h | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $(OBJ_DIR)/zip.o -c src/lib/zip/src/zip.c
