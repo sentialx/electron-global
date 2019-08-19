@@ -8,14 +8,14 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <string>
 #include <algorithm>
+#include <experimental/filesystem>
 #include <iostream>
+#include <string>
 #ifndef _WIN32
 #include <dirent.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <experimental/filesystem>
 #endif
 
 #include <curl/curl.h>
@@ -31,6 +31,8 @@
 
 #define PROGRAM_NAME "electron-runtime-launcher"
 #define PROGRAM_VERSION "0.1"
+
+#define BIN_DIR ".electron-runtime"
 
 #if defined(WIN32) || defined(_WIN32)
 #define OS "win32"
@@ -156,7 +158,7 @@ void error(const char *message, ...) {
     if (!uiEnabled) return;
 
     uiQueueMain(showError, (void *)buffer);
-    
+
 #ifdef _WIN32
     WaitForSingleObject(ui_thread, INFINITE);
 #else
@@ -235,7 +237,7 @@ DWORD WINAPI ui_main_win32(LPVOID lpParam) {
 
 static void updateInfo(void *arg) {
     Info *info = (Info *)arg;
-    
+
     if (info->status != NULL) {
         uiLabelSetText(label, info->status);
     }
@@ -294,23 +296,20 @@ void hide() {
     uiQueueMain(_onHide, NULL);
 }
 
-void queueInfoUpdate(const char* status, int progress) {
+void queueInfoUpdate(const char *status, int progress) {
     if (!uiEnabled) return;
 
-    Info* info = new Info{status, progress};
+    Info *info = new Info{status, progress};
     uiQueueMain(updateInfo, info);
 }
 
-void setStatus(const char *status) {
-    queueInfoUpdate(status, -1);
-}
+void setStatus(const char *status) { queueInfoUpdate(status, -1); }
 
-void setProgress(int progress) {
-    queueInfoUpdate(NULL, progress);
-}
+void setProgress(int progress) { queueInfoUpdate(NULL, progress); }
 
-bool extract(const char *archive, const char *path) {
-    return zip_extract(archive, path, NULL, NULL) == 0;
+bool extract(fs::path archive, fs::path path) {
+    return zip_extract((const char *)archive.c_str(),
+                       (const char *)path.c_str(), NULL, NULL) == 0;
 }
 
 static size_t _on_curl_write_memory(const char *ptr, size_t size, size_t nmemb,
@@ -419,7 +418,7 @@ void fetch(char **buffer, const char *url) {
     curl_easy_cleanup(curl);
 }
 
-bool download(const char* url, const char* filename) {
+bool download(std::string url, fs::path filename) {
     setStatus("Downloading Electron...");
 
     CURL *curl;
@@ -431,13 +430,13 @@ bool download(const char* url, const char* filename) {
         return false;
     }
 
-    FILE *file = fopen(filename, "wb");
+    FILE *file = fopen((const char *)filename.c_str(), "wb");
     if (!file) {
-        error("Failed to write to %s", filename);
+        error("Failed to write to %s", filename.c_str());
         return false;
     }
 
-    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_USERAGENT, PROGRAM_NAME "/" PROGRAM_VERSION);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, true);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _on_curl_write_file);
@@ -474,17 +473,21 @@ bool download(const char* url, const char* filename) {
 #endif
 
 int main(int argc, const char *argv[]) {
-    dest = getHomePath("electron-runtime/6");
+    fs::path binPath = getHomePath(BIN_DIR);
+
+    dest = binPath / "6";
 
     if (!fs::exists(dest)) {
         initUI();
 
-        std::string url = "https://github.com/electron/electron/releases/download/v6.0.2/electron-v6.0.2-win32-x64.zip";
-        zipPath = getHomePath("electron-runtime/electron.zip");
-    
+        std::string url =
+            "https://github.com/electron/electron/releases/download/v6.0.2/"
+            "electron-v6.0.2-win32-x64.zip";
+        zipPath = binPath / "electron.zip";
+
         fs::create_directory(dest);
 
-        if (!download(url.c_str(), zipPath.c_str())) {
+        if (!download(url, zipPath)) {
             if (isCancelled()) return 0;
 
             return 1;
@@ -494,7 +497,7 @@ int main(int argc, const char *argv[]) {
 
         std::cout << "Extracting..." << std::endl;
 
-        if (!extract(zipPath.c_str(), dest.c_str())) {
+        if (!extract(zipPath, dest)) {
             if (isCancelled()) return 0;
 
             error(
@@ -507,7 +510,6 @@ int main(int argc, const char *argv[]) {
     } else {
         std::cout << "Launching Electron..." << std::endl;
     }
-
 
 #ifdef _WIN32
     hide();
