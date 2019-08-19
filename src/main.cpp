@@ -9,10 +9,13 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <string>
+#include <algorithm>
+#include <iostream>
 #ifndef _WIN32
 #include <dirent.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <experimental/filesystem>
 #endif
 
 #include <curl/curl.h>
@@ -32,15 +35,15 @@
 #if defined(WIN32) || defined(_WIN32)
 #define OS "win32"
 #define HOME_ENV "HOMEPATH"
-#define PATH_SEPARATOR "\\"
+#define PATH_SEPARATOR '\\'
 #elif defined(__APPLE__)
 #define OS "darwin"
 #define HOME_ENV "HOME"
-#define PATH_SEPARATOR "/"
+#define PATH_SEPARATOR '/'
 #elif defined(__linux__)
 #define OS "linux"
 #define HOME_ENV "HOME"
-#define PATH_SEPARATOR "/"
+#define PATH_SEPARATOR '/'
 #else
 #error OS not detected
 #endif
@@ -58,6 +61,8 @@
 #endif
 
 #define BUILDARCHSTRING OS "-" ARCH
+
+namespace fs = std::experimental::filesystem;
 
 struct CurlBuffer {
     char *buffer;
@@ -95,6 +100,10 @@ unsigned long getTime() {
     return now.tv_sec * 1000 + now.tv_usec / 1000.0;
 }
 
+fs::path getHomePath(std::string subpath) {
+    return fs::path(getenv(HOME_ENV)) / subpath;
+}
+
 void cancel() {
 #ifdef _WIN32
     WaitForSingleObject(_ui_mutex, INFINITE);
@@ -125,11 +134,8 @@ static void showError(void *arg) {
     const char *message = (const char *)arg;
 
     uiMsgBoxError(window, "Error installing Electron", message);
-#ifdef _WIN32
-    ExitThread(0);
-#else
-    pthread_exit(NULL);
-#endif
+
+    exit(1);
 }
 
 void error(const char *message, ...) {
@@ -144,6 +150,7 @@ void error(const char *message, ...) {
     if (!uiEnabled) return;
 
     uiQueueMain(showError, (void *)message);
+    
 #ifdef _WIN32
     WaitForSingleObject(ui_thread, INFINITE);
 #else
@@ -289,26 +296,23 @@ void hide() {
     uiQueueMain(_onHide, NULL);
 }
 
-void setStatus(const char *status) {
+void queueUIUpdate(const char* status, int progress) {
     if (!uiEnabled) return;
 
-    UIUpdate* update = new UIUpdate;
-    *update = {status, -1};
+    UIUpdate* update = new UIUpdate{status, -1};
     uiQueueMain(updateUI, update);
+}
+
+void setStatus(const char *status) {
+    queueUIUpdate(status, -1);
 }
 
 void setProgress(int progress) {
-    if (!uiEnabled) return;
-
-    UIUpdate* update = new UIUpdate;
-    *update = {NULL, progress};
-    uiQueueMain(updateUI, update);
+    queueUIUpdate(NULL, progress);
 }
 
 bool extract(const char *archive, const char *path) {
-    bool success = zip_extract(archive, path, NULL, NULL) == 0;
-
-    return success;
+    return zip_extract(archive, path, NULL, NULL) == 0;
 }
 
 static size_t _on_curl_write_memory(const char *ptr, size_t size, size_t nmemb,
@@ -417,21 +421,21 @@ void fetch(char **buffer, const char *url) {
     curl_easy_cleanup(curl);
 }
 
-bool download(const char *url, const char *filename) {
-    setStatus("Downloading...");
+bool download(const char* url, const char* filename) {
+    setStatus("Downloading Electron...");
 
     CURL *curl;
     CURLcode res;
 
     curl = curl_easy_init();
     if (!curl) {
-        error("Error initializing libcurl");
+        error("Error initializing curl");
         return false;
     }
 
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        error("Unable to write to \"%s\"", filename);
+        error("Failed to write to %s", filename);
         return false;
     }
 
@@ -439,9 +443,11 @@ bool download(const char *url, const char *filename) {
     curl_easy_setopt(curl, CURLOPT_USERAGENT, PROGRAM_NAME "/" PROGRAM_VERSION);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, true);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _on_curl_write_file);
+
     if (uiEnabled) {
         curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, _on_curl_progress);
     }
+
     curl_easy_setopt(curl, CURLOPT_NOPROGRESS, false);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
 
@@ -451,7 +457,7 @@ bool download(const char *url, const char *filename) {
 
     if (response != CURLE_OK) {
         if (response != CURLE_ABORTED_BY_CALLBACK) {
-            error("Error downloading \"%s\"\n  %s", url,
+            error("Error downloading %s: %s", filename,
                   curl_easy_strerror(response));
         }
 
@@ -470,44 +476,27 @@ bool download(const char *url, const char *filename) {
 #endif
 
 int main(int argc, const char *argv[]) {
-    char *bestVersionString = NULL;
+    fs::path dest = getHomePath("electron-runtime/6");
 
-    /*if (!bestVersionString) {
+    if (!fs::exists(dest)) {
         initUI();
 
-        const char *apiUrl =
-            "https://api.github.com/repos/electron/electron/releases";
-        char *api;
-        fetch(&api, apiUrl);
+        std::string url = "https://github.com/electron/electron/releases/download/v6.0.2/electron-v6.0.2-win32-x64.zip";
+        std::string zipPath = getHomePath("electron-runtime/electron.zip");
+    
+        fs::create_directory(dest);
 
-        if (isCancelled()) return 0;
-
-        if (!bestVersionUrl) {
-            error(
-                "Unable to find a compatible version of Electron for download");
-            return 1;
-        }
-
-        if (!download(bestVersionUrl, downloadDestination)) {
+        if (!download(url.c_str(), zipPath.c_str())) {
             if (isCancelled()) return 0;
 
             return 1;
         }
 
-        printf("Extracting...\n");
+        std::cout << "Extracting..." << std::endl;
 
-#ifdef _WIN32
-        if (mkdir(extractDestination) < 0) {
-            error("Unable to create path for writing: %s", extractDestination);
-        }
-#else
-        if (mkdir(extractDestination, 0700) < 0) {
-            error("Unable to create path for writing: %s", extractDestination);
-        }
-#endif
-
-        if (!extract_files(downloadDestination, extractDestination)) {
-            rmdir(extractDestination);
+        if (!extract(zipPath.c_str(), dest.c_str())) {
+            fs::remove_all(dest);
+            fs::remove(zipPath);
 
             if (isCancelled()) return 0;
 
@@ -517,40 +506,11 @@ int main(int argc, const char *argv[]) {
             return 1;
         }
 
-        remove(downloadDestination);
-    }*/
-
-    initUI();
-
-    if (!download("https://github.com/electron/electron/releases/download/v6.0.2/electron-v6.0.2-win32-x64.zip",
-                  "electron.zip")) {
-        if (isCancelled()) return 0;
-
-        return 1;
+        fs::remove(zipPath);
+    } else {
+        std::cout << "Launching Electron..." << std::endl;
     }
 
-    printf("Extracting...\n");
-
-#ifdef _WIN32
-    if (mkdir("electron") < 0) {
-        error("Unable to create path for writing: %s", "electron");
-    }
-#else
-    if (mkdir("electron", 0700) < 0) {
-        error("Unable to create path for writing: %s", "electron");
-    }
-#endif
-
-    if (!extract("electron.zip", "electron")) {
-        rmdir("electron");
-
-        if (isCancelled()) return 0;
-
-        error(
-            "An error occurred extracting the downloaded Electron "
-            "archive");
-        return 1;
-    }
 
 #ifdef _WIN32
     hide();

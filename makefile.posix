@@ -11,13 +11,13 @@ all: electron-launcher
 test: electron-launcher
 
 electron-launcher: $(OBJ_DIR)/main.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a
-	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o electron-launcher
+	$(CXX) -std=c++17 $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o electron-launcher -lstdc++fs
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 $(OBJ_DIR)/main.o: src/main.cpp | $(OBJ_DIR)
-	$(CXX) $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp
+	$(CXX) -std=c++17 $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp -lstdc++fs
 
 $(OBJ_DIR)/zip.o: src/lib/zip/src/zip.c src/lib/zip/src/zip.h src/lib/zip/src/miniz.h | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $(OBJ_DIR)/zip.o -c src/lib/zip/src/zip.c
