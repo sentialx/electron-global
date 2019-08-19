@@ -35,15 +35,12 @@
 #if defined(WIN32) || defined(_WIN32)
 #define OS "win32"
 #define HOME_ENV "HOMEPATH"
-#define PATH_SEPARATOR '\\'
 #elif defined(__APPLE__)
 #define OS "darwin"
 #define HOME_ENV "HOME"
-#define PATH_SEPARATOR '/'
 #elif defined(__linux__)
 #define OS "linux"
 #define HOME_ENV "HOME"
-#define PATH_SEPARATOR '/'
 #else
 #error OS not detected
 #endif
@@ -70,7 +67,7 @@ struct CurlBuffer {
     size_t size;
 };
 
-struct UIUpdate {
+struct Info {
     const char *status;
     int progress;
 };
@@ -94,6 +91,9 @@ uiProgressBar *progressBar = NULL;
 
 bool cancelled = false;
 
+fs::path dest;
+fs::path zipPath;
+
 unsigned long getTime() {
     struct timeval now;
     gettimeofday(&now, 0);
@@ -105,6 +105,9 @@ fs::path getHomePath(std::string subpath) {
 }
 
 void cancel() {
+    fs::remove_all(dest);
+    fs::remove(zipPath);
+
 #ifdef _WIN32
     WaitForSingleObject(_ui_mutex, INFINITE);
     cancelled = true;
@@ -145,11 +148,14 @@ void error(const char *message, ...) {
     vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), message, args);
     va_end(args);
 
-    fprintf(stderr, "%s\n", buffer);
+    std::cout << buffer << std::endl;
+
+    fs::remove_all(dest);
+    fs::remove(zipPath);
 
     if (!uiEnabled) return;
 
-    uiQueueMain(showError, (void *)message);
+    uiQueueMain(showError, (void *)buffer);
     
 #ifdef _WIN32
     WaitForSingleObject(ui_thread, INFINITE);
@@ -173,8 +179,9 @@ static void *ui_main(void *arg) {
 
     const char *error = uiInit(&options);
     if (error) {
-        fprintf(stderr, "Failed to initialize libui\n");
-        fprintf(stderr, "  %s\n", error);
+        std::cout << "Failed to initialize window." << std::endl;
+        std::cout << error << std::endl;
+
         uiFreeInitError(error);
 #ifdef _WIN32
         ReleaseSemaphore(uiLoaded, 1, NULL);
@@ -188,33 +195,25 @@ static void *ui_main(void *arg) {
     uiWindowSetMargined(window, true);
     uiWindowOnClosing(window, onWindowClose, NULL);
 
-    uiBox *spacer;
-
-    uiBox *rows = uiNewVerticalBox();
-    uiBoxSetPadded(rows, true);
-    uiWindowSetChild(window, uiControl(rows));
-
-    spacer = uiNewVerticalBox();
-    uiBoxAppend(rows, uiControl(spacer), true);
+    uiBox *verticalBox = uiNewVerticalBox();
+    uiBoxSetPadded(verticalBox, true);
+    uiWindowSetChild(window, uiControl(verticalBox));
 
     label = uiNewLabel("");
-    uiBoxAppend(rows, uiControl(label), false);
+    uiBoxAppend(verticalBox, uiControl(label), false);
 
     progressBar = uiNewProgressBar();
-    uiBoxAppend(rows, uiControl(progressBar), false);
+    uiBoxAppend(verticalBox, uiControl(progressBar), false);
 
     uiBox *actions = uiNewHorizontalBox();
-    uiBoxAppend(rows, uiControl(actions), false);
+    uiBoxAppend(verticalBox, uiControl(actions), false);
 
-    spacer = uiNewHorizontalBox();
+    uiBox *spacer = uiNewHorizontalBox();
     uiBoxAppend(actions, uiControl(spacer), true);
 
     uiButton *cancelButton = uiNewButton("Cancel");
     uiButtonOnClicked(cancelButton, onCancelClicked, NULL);
     uiBoxAppend(actions, uiControl(cancelButton), false);
-
-    spacer = uiNewVerticalBox();
-    uiBoxAppend(rows, uiControl(spacer), true);
 
 #ifdef _WIN32
     ReleaseSemaphore(uiLoaded, 1, NULL);
@@ -234,18 +233,17 @@ DWORD WINAPI ui_main_win32(LPVOID lpParam) {
 }
 #endif
 
-static void updateUI(void *arg) {
-    UIUpdate *update = (UIUpdate *)arg;
+static void updateInfo(void *arg) {
+    Info *info = (Info *)arg;
     
-    if (update->status != NULL) {
-        uiLabelSetText(label, update->status);
+    if (info->status != NULL) {
+        uiLabelSetText(label, info->status);
     }
 
-    if (update->progress >= 0) {
-        uiProgressBarSetValue(progressBar, update->progress);
+    if (info->progress >= 0) {
+        uiProgressBarSetValue(progressBar, info->progress);
     }
 
-    // show the window the first time it is given information
     if (!windowVisible) {
         windowVisible = true;
         uiControlShow(uiControl(window));
@@ -255,7 +253,7 @@ static void updateUI(void *arg) {
 void initUI() {
     if (uiEnabled) return;
 
-    windowVisible = false;  // reset this before it belongs to the thread
+    windowVisible = false;
 
 #ifdef _WIN32
     _ui_mutex = CreateMutex(NULL, FALSE, NULL);
@@ -263,7 +261,7 @@ void initUI() {
 
     ui_thread = CreateThread(NULL, 0, ui_main_win32, NULL, 0, NULL);
     if (!ui_thread) {
-        fprintf(stderr, "Error creating ui thread\n");
+        std::cout << "Error creating UI thread" << std::endl;
         return;
     }
 
@@ -274,7 +272,7 @@ void initUI() {
     sem_init(&uiLoaded, 0, 0);
 
     if (pthread_create(&ui_thread, NULL, ui_main, NULL)) {
-        fprintf(stderr, "Error creating ui thread\n");
+        std::cout << "Error creating UI thread" << std::endl;
         return;
     }
 
@@ -296,19 +294,19 @@ void hide() {
     uiQueueMain(_onHide, NULL);
 }
 
-void queueUIUpdate(const char* status, int progress) {
+void queueInfoUpdate(const char* status, int progress) {
     if (!uiEnabled) return;
 
-    UIUpdate* update = new UIUpdate{status, -1};
-    uiQueueMain(updateUI, update);
+    Info* info = new Info{status, progress};
+    uiQueueMain(updateInfo, info);
 }
 
 void setStatus(const char *status) {
-    queueUIUpdate(status, -1);
+    queueInfoUpdate(status, -1);
 }
 
 void setProgress(int progress) {
-    queueUIUpdate(NULL, progress);
+    queueInfoUpdate(NULL, progress);
 }
 
 bool extract(const char *archive, const char *path) {
@@ -326,7 +324,7 @@ static size_t _on_curl_write_memory(const char *ptr, size_t size, size_t nmemb,
 
         char *newBuffer = (char *)realloc(buffer->buffer, buffer->size);
         if (!newBuffer) {
-            fprintf(stderr, "Out of memory making web request\n");
+            std::cout << "Out of memory" << std::endl;
             return 0;
         }
 
@@ -354,7 +352,7 @@ static int _on_curl_progress(void *clientp, double dltotal, double dlnow,
 
     unsigned long now = getTime();
 
-    if (now - lastUiTime > 1000 / 30) {
+    if (now - lastUiTime > 1000 / 60) {
         lastUiTime = now;
 
         if (dltotal > 0) {
@@ -476,13 +474,13 @@ bool download(const char* url, const char* filename) {
 #endif
 
 int main(int argc, const char *argv[]) {
-    fs::path dest = getHomePath("electron-runtime/6");
+    dest = getHomePath("electron-runtime/6");
 
     if (!fs::exists(dest)) {
         initUI();
 
         std::string url = "https://github.com/electron/electron/releases/download/v6.0.2/electron-v6.0.2-win32-x64.zip";
-        std::string zipPath = getHomePath("electron-runtime/electron.zip");
+        zipPath = getHomePath("electron-runtime/electron.zip");
     
         fs::create_directory(dest);
 
@@ -492,12 +490,11 @@ int main(int argc, const char *argv[]) {
             return 1;
         }
 
+        setStatus("Extracting Electron...");
+
         std::cout << "Extracting..." << std::endl;
 
         if (!extract(zipPath.c_str(), dest.c_str())) {
-            fs::remove_all(dest);
-            fs::remove(zipPath);
-
             if (isCancelled()) return 0;
 
             error(
