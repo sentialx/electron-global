@@ -31,12 +31,15 @@
 
 #if defined(WIN32) || defined(_WIN32)
 #define OS "win32"
+#define HOME_ENV "HOMEPATH"
 #define PATH_SEPARATOR "\\"
 #elif defined(__APPLE__)
 #define OS "darwin"
+#define HOME_ENV "HOME"
 #define PATH_SEPARATOR "/"
 #elif defined(__linux__)
 #define OS "linux"
+#define HOME_ENV "HOME"
 #define PATH_SEPARATOR "/"
 #else
 #error OS not detected
@@ -99,7 +102,7 @@ void cancel() {
     ReleaseMutex(_ui_mutex);
 #else
     pthread_mutex_lock(&_ui_mutex);
-    _ui_cancelled = true;
+    cancelled = true;
     pthread_mutex_unlock(&_ui_mutex);
 #endif
 }
@@ -135,6 +138,8 @@ void error(const char *message, ...) {
     va_start(args, message);
     vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), message, args);
     va_end(args);
+
+    fprintf(stderr, "%s\n", buffer);
 
     if (!uiEnabled) return;
 
@@ -224,7 +229,7 @@ DWORD WINAPI ui_main_win32(LPVOID lpParam) {
 
 static void updateUI(void *arg) {
     UIUpdate *update = (UIUpdate *)arg;
-
+    
     if (update->status != NULL) {
         uiLabelSetText(label, update->status);
     }
@@ -286,14 +291,18 @@ void hide() {
 
 void setStatus(const char *status) {
     if (!uiEnabled) return;
-    UIUpdate update{status, -1};
-    uiQueueMain(updateUI, &update);
+
+    UIUpdate* update = new UIUpdate;
+    *update = {status, -1};
+    uiQueueMain(updateUI, update);
 }
 
 void setProgress(int progress) {
     if (!uiEnabled) return;
-    UIUpdate update{NULL, progress};
-    uiQueueMain(updateUI, &update);
+
+    UIUpdate* update = new UIUpdate;
+    *update = {NULL, progress};
+    uiQueueMain(updateUI, update);
 }
 
 bool extract(const char *archive, const char *path) {
@@ -450,6 +459,7 @@ bool download(const char *url, const char *filename) {
     }
 
     curl_easy_cleanup(curl);
+
     fclose(file);
 
     return success;
@@ -512,8 +522,7 @@ int main(int argc, const char *argv[]) {
 
     initUI();
 
-    if (!download("https://github.com/electron/electron/releases/download/"
-                  "v6.0.2/electron-v6.0.2-win32-x64.zip",
+    if (!download("https://github.com/electron/electron/releases/download/v6.0.2/electron-v6.0.2-win32-x64.zip",
                   "electron.zip")) {
         if (isCancelled()) return 0;
 
@@ -527,8 +536,8 @@ int main(int argc, const char *argv[]) {
         error("Unable to create path for writing: %s", "electron");
     }
 #else
-    if (mkdir(extractDestination, 0700) < 0) {
-        error("Unable to create path for writing: %s", extractDestination);
+    if (mkdir("electron", 0700) < 0) {
+        error("Unable to create path for writing: %s", "electron");
     }
 #endif
 
