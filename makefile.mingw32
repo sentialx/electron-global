@@ -1,9 +1,9 @@
-CC             = i686-w64-mingw32-gcc
-CXX            = i686-w64-mingw32-g++
-RES            = i686-w64-mingw32-windres
+CC             = x86_64-w64-mingw32-gcc
+CXX            = x86_64-w64-mingw32-g++
+RES            = x86_64-w64-mingw32-windres
 CFLAGS         = -Os -fdata-sections -ffunction-sections -Isrc/lib/curl/include -static-libgcc -static-libstdc++ -DCURL_STATICLIB
 CMAKE_COMMANDS = env CFLAGS="-fdata-sections -ffunction-sections" CXXFLAGS="-fdata-sections -ffunction-sections -std=c++17"
-LDFLAGS        = -lm -s -Wl,--gc-sections -static-libgcc -static-libstdc++ -mwindows -lcomctl32 -lole32 -ld2d1 -ldwrite -lws2_32 -lcrypt32
+LDFLAGS        = -lm -s -Wl,--gc-sections -static-libgcc -static-libstdc++ -mwindows -lcomctl32 -lole32 -ld2d1 -ldwrite -lws2_32 -lcrypt32 -lpthread -static
 OBJ_DIR        = obj/mingw32
 
 .PHONY: all
@@ -24,18 +24,17 @@ $(OBJ_DIR)/resources.o: src/resources.rc | $(OBJ_DIR)
 $(OBJ_DIR)/zip.o: src/lib/zip/src/zip.c src/lib/zip/src/zip.h src/lib/zip/src/miniz.h | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $(OBJ_DIR)/zip.o -c src/lib/zip/src/zip.c
 
-$(OBJ_DIR)/libui.a: src/lib/libui/build-mingw32/out/libui.a | $(OBJ_DIR)
-	cp -rf src/lib/libui/build-mingw32/out/libui.a $(OBJ_DIR)/libui.a
+$(OBJ_DIR)/libui.a: src/lib/libui/build/meson-out/libui.a | $(OBJ_DIR)
+	cp -rf src/lib/libui/build/meson-out/libui.a $(OBJ_DIR)/libui.a
 
 $(OBJ_DIR)/libcurl.a: src/lib/curl-build-mingw32/lib/libcurl.a | $(OBJ_DIR)
 	cp -rf src/lib/curl-build-mingw32/lib/libcurl.a $(OBJ_DIR)/libcurl.a
 
-.PHONY: src/lib/libui/build-mingw32/out/libui.a
-src/lib/libui/build-mingw32/out/libui.a:
-	mkdir -p src/lib/libui/build-mingw32
+.PHONY: src/lib/libui/build/meson-out/libui.a
+src/lib/libui/build/meson-out/libui.a:
 	cd src/lib/libui;\
 		meson setup build --buildtype=release --default-library=static --cross-file=../../../toolchain-mingw32
-		ninja -C build install
+		ninja -C src/lib/libui/build
 
 .PHONY: src/lib/curl-build-mingw32/lib/libcurl.a
 src/lib/curl-build-mingw32/lib/libcurl.a:

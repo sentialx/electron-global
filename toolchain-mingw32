@@ -1,11 +1,18 @@
 [binaries]
-c = 'i686-w64-mingw32-gcc'
-cpp = 'i686-w64-mingw32-g++'
+c = 'x86_64-w64-mingw32-gcc'
+cpp = 'x86_64-w64-mingw32-g++'
 pkgconfig = 'pkg-config'
 exe_wrapper = 'wine'
+windres='x86_64-w64-mingw32-windres'
+strip='x86_64-w64-mingw32-strip'
+ar='x86_64-w64-mingw32-ar'
+
+[properties]
+root = 'x86_64-w64-mingw32'
+cpp_args = ['-std=c++17']
 
 [host_machine]
-system = 'linux'
-cpu_family = 'x86_64'
+system = 'windows'
+cpu_family = 'x86'
 cpu = 'x86_64'
 endian = 'little'

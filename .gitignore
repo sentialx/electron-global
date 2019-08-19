@@ -3,3 +3,7 @@ node_modules
 build
 dist
 target
+electron-launcher.exe
+obj
+curl-build*
+
