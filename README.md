@@ -1,16 +1,16 @@
-# electron-runtime
+# electron-global
 
 A tool for building lighweight Electron apps using a global Electron instance.
 
 ![image](https://user-images.githubusercontent.com/11065386/63189647-b526eb00-c064-11e9-9280-c2148d8ae99e.png)
 
-(`electron-quick-start` repo built with `electron-runtime` and `electron-builder`)
+(`electron-quick-start` repo built with `electron-global` and `electron-builder`)
 
 # How it works?
 
-`electron-runtime` creates a custom Electron distributable with a small app launcher which checks the app's `package.json` and downloads corresponding `major` version and the newest in case of `minor` and `patch`. The Electron versions are being saved to:
+`electron-global` creates a custom Electron distributable with a small app launcher which checks the app's `package.json` and downloads corresponding `major` version and the newest in case of `minor` and `patch`. The Electron versions are being saved to:
 
-- on macOS and Linux: `~/.electron-runtime/x`
+- on macOS and Linux: `~/.electron-global/x`
 
 Where `x` is the major version of Electron (e.g. 6).
 
@@ -21,17 +21,17 @@ Then the distributable can be used with [`electron-builder`](https://github.com/
 The [`electron-builder`](https://github.com/electron-userland/electron-builder) package is also required to successfully build an app.
 
 ```
-$ npm install --save-dev electron-runtime electron-builder
+$ npm install --save-dev electron-global electron-builder
 ```
 
 # Usage
 
-You need to create `electron-builder.json` file in your project directory, configure it and specify `electronDist` directory to where the `electron-runtime` generates the output (default is `./electron-runtime`). Example:
+You need to create `electron-builder.json` file in your project directory, configure it and specify `electronDist` directory to where the `electron-global` generates the output (default is `./electron-global`). Example:
 
 ```
 {
   ...
-  "electronDist": "./electron-runtime"
+  "electronDist": "./electron-global"
   ...
 }
 ```
@@ -39,12 +39,12 @@ You need to create `electron-builder.json` file in your project directory, confi
 Then you can run the following command (example for macOS):
 
 ```
-$ electron-runtime -m && electron-builder -m
+$ electron-global -m && electron-builder -m
 ```
 
 ## CLI Options:
 ```
-Usage: electron-runtime [options]
+Usage: electron-global [options]
 
 Options:
   -m, --mac                Create Electron dist for macOS.
