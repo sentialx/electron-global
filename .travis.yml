@@ -4,6 +4,9 @@ sudo: enabled
 dist: trusty
 install:
   - npm ci
+python:
+  - "2.7"
+  - "3.7"
 cache:
   directories:
     - node_modules
@@ -21,13 +24,12 @@ addons:
       - ninja-build
       - libcurl4-openssl-dev
       - gtk+-3.0
-      - python3
       - wine
       - pkg-config
       - mingw-w64
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja python3 ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install meson ; fi
 
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip3 install meson ; fi
