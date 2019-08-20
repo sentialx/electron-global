@@ -27,6 +27,7 @@ addons:
       - pkg-config
       - mingw-w64
       - python3-pip
+      - python3-setuptools
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja ; fi
