@@ -129,41 +129,21 @@ bool extract(fs::path archive, fs::path path) {
                      NULL, NULL) == 0;
 }
 
-static size_t _on_curl_write_memory(const char *ptr, size_t size, size_t nmemb,
-                                    void *userdata) {
-  CurlBuffer *buffer = (CurlBuffer *)userdata;
-
-  size_t chunkSize = size * nmemb;
-
-  if (buffer->length + chunkSize + 1 >= buffer->size) {
-    buffer->size = buffer->size + chunkSize + 1 + (64 * 1024);
-
-    char *newBuffer = (char *)realloc(buffer->buffer, buffer->size);
-    if (!newBuffer) {
-      std::cout << "Out of memory" << std::endl;
-      return 0;
-    }
-
-    buffer->buffer = newBuffer;
-  }
-
-  memcpy(&buffer->buffer[buffer->length], ptr, chunkSize);
-
-  buffer->length += chunkSize;
-  buffer->buffer[buffer->length] = '\0';
-
-  return chunkSize;
+static size_t onWrite(const char *contents, size_t size, size_t nmemb,
+                      void *userp) {
+  ((std::string *)userp)->append((char *)contents, size * nmemb);
+  return size * nmemb;
 }
 
-static size_t _on_curl_write_file(const char *ptr, size_t size, size_t nmemb,
-                                  void *userdata) {
+static size_t onWriteFile(const char *ptr, size_t size, size_t nmemb,
+                          void *userdata) {
   FILE *file = (FILE *)userdata;
 
   return fwrite(ptr, size, nmemb, file);
 }
 
-static int _on_curl_progress(void *clientp, double dltotal, double dlnow,
-                             double ultotal, double ulnow) {
+static int onProgress(void *clientp, double dltotal, double dlnow,
+                      double ultotal, double ulnow) {
   static unsigned long lastUiTime = 0;
 
   unsigned long now = getTime();
@@ -181,30 +161,20 @@ static int _on_curl_progress(void *clientp, double dltotal, double dlnow,
   return 0;
 }
 
-void fetch(char **buffer, const char *url) {
-  *buffer = 0;
-
-  CURL *curl;
-  CURLcode res;
-
-  curl = curl_easy_init();
+std::string fetch(const char *url) {
+  CURL *curl = curl_easy_init();
   if (!curl) {
     error("Error initializing libcurl");
     return;
   }
 
-  CurlBuffer curlBuffer = {
-      .buffer = (char *)malloc(4096), .length = 0, .size = 4096};
-
-  curlBuffer.buffer[0] = '\0';
+  std::string readBuffer;
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, PROGRAM_NAME "/" PROGRAM_VERSION);
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, true);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _on_curl_write_memory);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &curlBuffer);
-  curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, _on_curl_progress);
-  curl_easy_setopt(curl, CURLOPT_NOPROGRESS, false);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, onWrite);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
   CURLcode response = curl_easy_perform(curl);
 
@@ -222,21 +192,15 @@ void fetch(char **buffer, const char *url) {
           error("Error retrieving %s\n%s", url, curl_easy_strerror(response));
       }
     }
-
-    free(curlBuffer.buffer);
-    curlBuffer.buffer = NULL;
   }
 
-  *buffer = curlBuffer.buffer;
-
   curl_easy_cleanup(curl);
+
+  return readBuffer;
 }
 
 bool download(std::string url, const char *filename) {
-  CURL *curl;
-  CURLcode res;
-
-  curl = curl_easy_init();
+  CURL *curl = curl_easy_init();
   if (!curl) {
     error("Error initializing curl");
     return false;
@@ -251,8 +215,8 @@ bool download(std::string url, const char *filename) {
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_USERAGENT, PROGRAM_NAME "/" PROGRAM_VERSION);
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, true);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _on_curl_write_file);
-  curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, _on_curl_progress);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, onWriteFile);
+  curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, onProgress);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, false);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
 
