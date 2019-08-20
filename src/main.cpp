@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include "lib/rapidjson/include/rapidjson/document.h"
 
 #include <curl/curl.h>
 
@@ -21,7 +22,6 @@
 #endif
 
 #include "lib/libui/ui.h"
-#include "lib/semver.c/semver.h"
 #include "lib/zip/src/zip.h"
 
 #define PROGRAM_NAME "electron-runtime-launcher"
@@ -70,6 +70,8 @@ uiProgressBar *progressBar = NULL;
 
 fs::path dest;
 fs::path zipPath;
+
+std::string electronMajor;
 
 bool done = false;
 
@@ -239,12 +241,37 @@ bool download(std::string url, const char *filename) {
   return success;
 }
 
+std::string getMatchingVersion(std::string major) {
+  auto data = fetch("http://registry.npmjs.org/electron");
+
+  rapidjson::Document document;
+  document.Parse(data.c_str());
+
+  auto versionsObj = document["versions"].GetObject();
+
+  std::vector<std::string> versions;
+
+  for (rapidjson::Value::ConstMemberIterator itr = versionsObj.MemberBegin();
+       itr != versionsObj.MemberEnd(); ++itr) {
+    versions.push_back(std::string(itr->name.GetString()));
+  }
+
+  for (int i = versions.size() - 1; i >= 0; i--) {
+    if (versions[i].rfind(major, 0) == 0) {
+      return versions[i];
+    }
+  }
+
+  return NULL;
+}
+
 void threadproc(void) {
+  auto version = getMatchingVersion(electronMajor);
+
   fs::path binPath = getHomePath(BIN_DIR);
 
-  std::string url =
-      "https://github.com/electron/electron/releases/download/v6.0.2/"
-      "electron-v6.0.2-win32-x64.zip";
+  std::string url = "https://github.com/electron/electron/releases/download/v" +
+                    version + "/electron-v" + version + "-" OS "-" ARCH ".zip";
   zipPath = binPath / "electron.zip";
 
   fs::create_directory(dest);
@@ -272,11 +299,13 @@ void threadproc(void) {
 }
 
 int main() {
+  electronMajor = "6";
+
   fs::path binPath = getHomePath(BIN_DIR);
 
   fs::create_directory(binPath);
 
-  dest = binPath / "6";
+  dest = binPath / electronMajor;
 
   if (!fs::exists(dest)) {
     uiInitOptions options;
