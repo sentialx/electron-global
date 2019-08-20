@@ -1,11 +1,11 @@
 language: node_js
 node_js: '12'
 sudo: enabled
-dist: trusty
+dist: bionic
 install:
   - npm ci
 python:
-  - "3.6"
+  - 3.7
 cache:
   directories:
     - node_modules
@@ -27,7 +27,6 @@ addons:
       - pkg-config
       - mingw-w64
       - python3-pip
-      - python3
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja ; fi
