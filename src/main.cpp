@@ -10,7 +10,9 @@
 #include <unistd.h>
 #include <algorithm>
 #include <experimental/filesystem>
+#include <fstream>
 #include <iostream>
+#include <streambuf>
 #include <string>
 #include <thread>
 
@@ -31,12 +33,15 @@
 #if defined(WIN32) || defined(_WIN32)
 #define OS "win32"
 #define HOME_ENV "HOMEPATH"
+#define ELECTRON_VERSION_PATH "electron_version"
 #elif defined(__APPLE__)
 #define OS "darwin"
 #define HOME_ENV "HOME"
+#define ELECTRON_VERSION_PATH "../Resources/electron_version"
 #elif defined(__linux__)
 #define OS "linux"
 #define HOME_ENV "HOME"
+#define ELECTRON_VERSION_PATH "electron_version"
 #else
 #error OS not detected
 #endif
@@ -152,11 +157,7 @@ static int onProgress(void *clientp, double dltotal, double dlnow,
   if (now - lastUiTime > 1000 / 60) {
     lastUiTime = now;
 
-    if (dltotal > 0) {
-      setProgress((int)((dlnow * 100) / dltotal));
-    } else {
-      setProgress(0);
-    }
+    setProgress(dltotal > 0 ? (int)((dlnow / dltotal) * 100) : 0);
   }
 
   return 0;
@@ -256,16 +257,21 @@ std::string getMatchingVersion(std::string major) {
   }
 
   for (int i = versions.size() - 1; i >= 0; i--) {
-    if (versions[i].rfind(major, 0) == 0) {
+    if (versions[i][0] == major[0]) {
       return versions[i];
     }
   }
 
-  return NULL;
+  return "";
 }
 
-void threadproc(void) {
+void downloadThread(void) {
   auto version = getMatchingVersion(electronMajor);
+
+  if (version == "") {
+    error("Invalid Electron version");
+    return;
+  }
 
   fs::path binPath = getHomePath(BIN_DIR);
 
@@ -298,7 +304,10 @@ void threadproc(void) {
 }
 
 int main() {
-  electronMajor = "6";
+  std::ifstream ifstream(ELECTRON_VERSION_PATH);
+
+  electronMajor = std::string((std::istreambuf_iterator<char>(ifstream)),
+                              std::istreambuf_iterator<char>());
 
   fs::path binPath = getHomePath(BIN_DIR);
 
@@ -312,7 +321,7 @@ int main() {
 
     if (uiInit(&options) != NULL) abort();
 
-    window = uiNewWindow("Downloading Electron", 350, 50, false);
+    window = uiNewWindow("Downloading Electron", 300, 50, false);
     uiWindowSetMargined(window, true);
     uiWindowOnClosing(window, onWindowClose, NULL);
 
@@ -340,7 +349,7 @@ int main() {
 
     setStatus("Downloading Electron...");
 
-    std::thread thread(threadproc);
+    std::thread thread(downloadThread);
 
     uiMain();
   } else {
