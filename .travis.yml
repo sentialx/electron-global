@@ -1,0 +1,47 @@
+language: node_js
+node_js: '12'
+sudo: enabled
+dist: trusty
+install:
+  - npm ci
+cache:
+  directories:
+    - node_modules
+    - $HOME/.npm/_prebuilds
+os:
+  - linux
+  - osx
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-7
+      - g++-7
+      - ninja-build
+      - libcurl4-openssl-dev
+      - gtk+-3.0
+      - python3
+      - wine-stable
+      - pkg-config
+      - mingw-w64
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update ; 
+      brew install ninja python3 ;
+      pip3 install meson ;
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; 
+      pip3 install meson
+    fi
+script:
+   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      export CC=gcc-7 ;
+      export CXX=g++-7 ;
+    fi
+
+  - echo "1" | sudo update-alternatives --config i686-w64-mingw32-g++
+
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./scripts/build-linux.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; make -f makefile.posix; fi

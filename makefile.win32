@@ -1,6 +1,6 @@
-CC             = x86_64-w64-mingw32-gcc
-CXX            = x86_64-w64-mingw32-g++
-RES            = x86_64-w64-mingw32-windres
+CC             = i686-w64-mingw32-gcc
+CXX            = i686-w64-mingw32-g++
+RES            = i686-w64-mingw32-windres
 CFLAGS         = -Os -fdata-sections -ffunction-sections -Isrc/lib/curl/include -static-libgcc -static-libstdc++ -DCURL_STATICLIB
 CMAKE_COMMANDS = env CFLAGS="-fdata-sections -ffunction-sections" CXXFLAGS="-fdata-sections -ffunction-sections -std=c++17"
 LDFLAGS        = -lm -s -Wl,--gc-sections -static-libgcc -static-libstdc++ -mwindows -lcomctl32 -lole32 -ld2d1 -ldwrite -lws2_32 -lcrypt32 -lpthread -static
@@ -16,7 +16,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 $(OBJ_DIR)/main.o: src/main.cpp | $(OBJ_DIR)
-	$(CXX) $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp
+	$(CXX) -std=c++17 $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp  -lstdc++fs
 
 $(OBJ_DIR)/resources.o: src/resources.rc | $(OBJ_DIR)
 	$(RES) src/resources.rc $(OBJ_DIR)/resources.o
@@ -33,7 +33,7 @@ $(OBJ_DIR)/libcurl.a: src/lib/curl-build-mingw32/lib/libcurl.a | $(OBJ_DIR)
 .PHONY: src/lib/libui/build/meson-out/libui.a
 src/lib/libui/build/meson-out/libui.a:
 	cd src/lib/libui;\
-		meson setup build --buildtype=release --default-library=static --cross-file=../../../toolchain-mingw32
+		meson setup build --buildtype=release --default-library=static --cross-file=../../../toolchains/windows.meson
 		ninja -C src/lib/libui/build
 
 .PHONY: src/lib/curl-build-mingw32/lib/libcurl.a
@@ -41,7 +41,7 @@ src/lib/curl-build-mingw32/lib/libcurl.a:
 	mkdir -p src/lib/curl-build-mingw32
 	cd src/lib/curl-build-mingw32;\
 		cmake -E $(CMAKE_COMMANDS)\
-			cmake ../curl -DCMAKE_TOOLCHAIN_FILE=../../../toolchain-mingw32.cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_SHARED_LIBS=OFF -DHTTP_ONLY=ON -DCMAKE_USE_WINSSL=ON -DCMAKE_USE_OPENSSL=OFF -DCURL_CA_PATH=none;\
+			cmake ../curl -DCMAKE_TOOLCHAIN_FILE=../../../toolchains/windows.cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_SHARED_LIBS=OFF -DHTTP_ONLY=ON -DCMAKE_USE_WINSSL=ON -DCMAKE_USE_OPENSSL=OFF -DCURL_CA_PATH=none;\
 		make libcurl
 
 .PHONY: clean
@@ -49,4 +49,3 @@ clean:
 	if [ -d "src/lib/libui/build" ]; then rm -rf src/lib/libui/build; fi
 	if [ -d "src/lib/curl-build-mingw32" ]; then rm -rf src/lib/curl-build-mingw32; fi
 	rm -rf $(OBJ_DIR)
-	rm -f electron-launcher.exe

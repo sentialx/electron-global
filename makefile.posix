@@ -35,4 +35,4 @@ src/lib/libui/build/meson-out/libui.a:
 clean:
 	if [ -d "src/lib/libui/build" ]; then rm -rf src/lib/libui/build; fi
 	rm -rf $(OBJ_DIR)
-	rm -f electron-launcher
+	

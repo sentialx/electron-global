@@ -330,7 +330,7 @@ int main() {
     uiBox *spacer = uiNewHorizontalBox();
     uiBoxAppend(actions, uiControl(spacer), true);
 
-    uiButton *cancelButton = uiNewButton("Cancel");
+    uiButton *cancelButton = uiNewButton("  Cancel  ");
     uiButtonOnClicked(cancelButton, onCancelClicked, NULL);
     uiBoxAppend(actions, uiControl(cancelButton), false);
 
