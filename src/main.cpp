@@ -165,7 +165,7 @@ std::string fetch(const char *url) {
   CURL *curl = curl_easy_init();
   if (!curl) {
     error("Error initializing libcurl");
-    return;
+    return "";
   }
 
   std::string readBuffer;
