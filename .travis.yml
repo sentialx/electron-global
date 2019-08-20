@@ -23,7 +23,7 @@ addons:
       - ninja-build
       - libcurl4-openssl-dev
       - gtk+-3.0
-      - wine
+      - wine-stable
       - pkg-config
       - mingw-w64
       - python3-pip
