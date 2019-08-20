@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <algorithm>
+#include <chrono>
 #include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
@@ -8,14 +9,14 @@
 #include <string>
 #include <thread>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include <curl/curl.h>
 #include "lib/libui/ui.h"
 #include "lib/rapidjson/include/rapidjson/document.h"
 #include "lib/zip/src/zip.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #define PROGRAM_NAME "electron-launcher"
 #define PROGRAM_VERSION "0.1"
@@ -70,12 +71,6 @@ fs::path zipPath;
 std::string electronMajor;
 
 bool done = false;
-
-unsigned long getTime() {
-  struct timeval now;
-  gettimeofday(&now, 0);
-  return now.tv_sec * 1000 + now.tv_usec / 1000.0;
-}
 
 fs::path getHomePath(std::string subpath) {
   return fs::path(getenv(HOME_ENV)) / subpath;
@@ -144,7 +139,9 @@ static int onProgress(void *clientp, double dltotal, double dlnow,
                       double ultotal, double ulnow) {
   static unsigned long lastUiTime = 0;
 
-  unsigned long now = getTime();
+  auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                 std::chrono::system_clock::now().time_since_epoch())
+                 .count();
 
   if (now - lastUiTime > 1000 / 60) {
     lastUiTime = now;
