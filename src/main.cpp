@@ -13,21 +13,20 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include "lib/rapidjson/include/rapidjson/document.h"
-
-#include <curl/curl.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
+#include <curl/curl.h>
 #include "lib/libui/ui.h"
+#include "lib/rapidjson/include/rapidjson/document.h"
 #include "lib/zip/src/zip.h"
 
-#define PROGRAM_NAME "electron-runtime-launcher"
+#define PROGRAM_NAME "electron-launcher"
 #define PROGRAM_VERSION "0.1"
 
-#define BIN_DIR ".electron-runtime"
+#define BIN_DIR ".electron-global"
 
 #if defined(WIN32) || defined(_WIN32)
 #define OS "win32"
