@@ -22,7 +22,7 @@ addons:
       - libcurl4-openssl-dev
       - gtk+-3.0
       - python3
-      - wine-stable
+      - wine
       - pkg-config
       - mingw-w64
 before_install:
