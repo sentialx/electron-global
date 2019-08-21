@@ -68,7 +68,7 @@ uiProgressBar *progressBar = NULL;
 fs::path dest;
 fs::path zipPath;
 
-std::string electronMajor;
+std::string electronVersion;
 
 bool done = false;
 
@@ -115,8 +115,6 @@ int onWindowClose(uiWindow *w, void *data) {
 
 void setStatus(const char *status) { uiLabelSetText(label, status); }
 
-void setProgress(int progress) { uiProgressBarSetValue(progressBar, progress); }
-
 bool extract(fs::path archive, fs::path path) {
   return zip_extract((const char *)archive.c_str(), (const char *)path.c_str(),
                      NULL, NULL) == 0;
@@ -146,7 +144,8 @@ static int onProgress(void *clientp, double dltotal, double dlnow,
   if (now - lastUiTime > 1000 / 60) {
     lastUiTime = now;
 
-    setProgress(dltotal > 0 ? (int)((dlnow / dltotal) * 100) : 0);
+    uiProgressBarSetValue(progressBar,
+                          dltotal > 0 ? (int)((dlnow / dltotal) * 100) : 0);
   }
 
   return 0;
@@ -255,17 +254,11 @@ std::string getMatchingVersion(std::string major) {
 }
 
 void downloadThread(void) {
-  auto version = getMatchingVersion(electronMajor);
-
-  if (version == "") {
-    error("Invalid Electron version");
-    return;
-  }
-
   fs::path binPath = getHomePath(BIN_DIR);
 
   std::string url = "https://github.com/electron/electron/releases/download/v" +
-                    version + "/electron-v" + version + "-" OS "-" ARCH ".zip";
+                    electronVersion + "/electron-v" + electronVersion +
+                    "-" OS "-" ARCH ".zip";
   zipPath = binPath / "electron.zip";
 
   fs::create_directory(dest);
@@ -292,51 +285,62 @@ void downloadThread(void) {
   exit(0);
 }
 
+void initUI() {
+  uiInitOptions options;
+  memset(&options, 0, sizeof(uiInitOptions));
+
+  if (uiInit(&options) != NULL) abort();
+
+  window = uiNewWindow("Downloading Electron", 300, 50, false);
+  uiWindowSetMargined(window, true);
+  uiWindowOnClosing(window, onWindowClose, NULL);
+
+  uiBox *verticalBox = uiNewVerticalBox();
+  uiBoxSetPadded(verticalBox, true);
+  uiWindowSetChild(window, uiControl(verticalBox));
+
+  label = uiNewLabel("");
+  uiBoxAppend(verticalBox, uiControl(label), false);
+
+  progressBar = uiNewProgressBar();
+  uiBoxAppend(verticalBox, uiControl(progressBar), false);
+
+  uiBox *actions = uiNewHorizontalBox();
+  uiBoxAppend(verticalBox, uiControl(actions), false);
+
+  uiBox *spacer = uiNewHorizontalBox();
+  uiBoxAppend(actions, uiControl(spacer), true);
+
+  uiButton *cancelButton = uiNewButton("  Cancel  ");
+  uiButtonOnClicked(cancelButton, onCancelClicked, NULL);
+  uiBoxAppend(actions, uiControl(cancelButton), false);
+
+  uiControlShow(uiControl(window));
+
+  setStatus("Downloading Electron...");
+}
+
 int main() {
   std::ifstream ifstream(ELECTRON_VERSION_PATH);
 
-  electronMajor = std::string((std::istreambuf_iterator<char>(ifstream)),
-                              std::istreambuf_iterator<char>());
+  auto major = std::string((std::istreambuf_iterator<char>(ifstream)),
+                           std::istreambuf_iterator<char>());
+
+  electronVersion = getMatchingVersion(major);
+
+  if (electronVersion == "") {
+    error("Invalid Electron version");
+    return 1;
+  }
 
   fs::path binPath = getHomePath(BIN_DIR);
 
   fs::create_directory(binPath);
 
-  dest = binPath / electronMajor;
+  dest = binPath / electronVersion;
 
   if (!fs::exists(dest)) {
-    uiInitOptions options;
-    memset(&options, 0, sizeof(uiInitOptions));
-
-    if (uiInit(&options) != NULL) abort();
-
-    window = uiNewWindow("Downloading Electron", 300, 50, false);
-    uiWindowSetMargined(window, true);
-    uiWindowOnClosing(window, onWindowClose, NULL);
-
-    uiBox *verticalBox = uiNewVerticalBox();
-    uiBoxSetPadded(verticalBox, true);
-    uiWindowSetChild(window, uiControl(verticalBox));
-
-    label = uiNewLabel("");
-    uiBoxAppend(verticalBox, uiControl(label), false);
-
-    progressBar = uiNewProgressBar();
-    uiBoxAppend(verticalBox, uiControl(progressBar), false);
-
-    uiBox *actions = uiNewHorizontalBox();
-    uiBoxAppend(verticalBox, uiControl(actions), false);
-
-    uiBox *spacer = uiNewHorizontalBox();
-    uiBoxAppend(actions, uiControl(spacer), true);
-
-    uiButton *cancelButton = uiNewButton("  Cancel  ");
-    uiButtonOnClicked(cancelButton, onCancelClicked, NULL);
-    uiBoxAppend(actions, uiControl(cancelButton), false);
-
-    uiControlShow(uiControl(window));
-
-    setStatus("Downloading Electron...");
+    initUI();
 
     std::thread thread(downloadThread);
 
