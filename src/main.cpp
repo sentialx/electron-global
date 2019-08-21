@@ -292,7 +292,7 @@ void downloadThread(void) {
 
     std::cout << "Done extracting" << std::endl;
 
-    uiQuit();
+    exit(0);
 }
 
 int main() {
