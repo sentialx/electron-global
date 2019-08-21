@@ -1,7 +1,6 @@
 language: node_js
 node_js: '12'
 sudo: enabled
-dist: bionic
 install:
   - npm ci
 python:
@@ -10,9 +9,12 @@ cache:
   directories:
     - node_modules
     - $HOME/.npm/_prebuilds
-os:
-  - linux
-  - osx
+matrix:
+  include:
+    - os: linux
+      dist: bionic
+    - os: osx
+      osx_image: xcode11
 addons:
   apt:
     sources:
@@ -23,22 +25,29 @@ addons:
       - ninja-build
       - libcurl4-openssl-dev
       - gtk+-3.0
-      - wine-stable
+      # - wine-stable
       - pkg-config
-      - mingw-w64
+      # - mingw-w64
       - python3-pip
       - python3-setuptools
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install meson ; fi
-
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip3 install meson ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then eval "brew install gtk+3 ninja" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip3 install --upgrade wheel ; fi
+  - pip3 install meson
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CC=gcc-7 ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CXX=g++-7 ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CC=gcc-7 && export CXX=g++-7 ; fi
 
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "1" | sudo update-alternatives --config i686-w64-mingw32-g++ ; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "1" | sudo update-alternatives --config i686-w64-mingw32-g++ ; fi
 
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./scripts/build-linux.sh ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./scripts/build-darwin.sh ; fi
+  - source ./scripts/build.sh
+deploy:
+  provider: releases
+  api_key: $GH_TOKEN
+  file_glob: true
+  draft: true
+  file: 
+    - build/*.zip
+  skip_cleanup: true
+  on:
+    repo: sentialx/electron-global
+    all_branches: true
