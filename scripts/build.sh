@@ -13,11 +13,11 @@ if [[ "$(uname)" == "Darwin" ]]; then
   make -f makefile.darwin
   OS="darwin"
 else
-  make -f makefile.posix
+  make -f makefile.linux
   OS="linux"
 fi
 
 echo $OS
 echo $TRAVIS_TAG
 
-zip -r "build/electron-launcher-${TRAVIS_TAG}-${OS}-ia32.zip" electron-launcher
+zip -r "build/electron-launcher-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron-launcher"

@@ -1,23 +1,18 @@
-CC      = clang
-CXX     = clang++
-CFLAGS  = -Os -fdata-sections -ffunction-sections
-LDFLAGS = -lm -lcurl -lpthread -ldl `pkg-config gtk+-3.0 --libs` -s -Wl,-dead_strip
-OBJ_DIR = obj/posix
-
-.PHONY: all
-all: electron-launcher
-
-.PHONY: test
-test: electron-launcher
+CC       = clang
+CXX      = clang++
+CXXFLAGS = --std=c++11
+CFLAGS   = -Os -fdata-sections -ffunction-sections
+LDFLAGS  = -lm -lcurl -lpthread -ldl `pkg-config gtk+-3.0 --libs` -s -Wl,-dead_strip
+OBJ_DIR  = obj/darwin
 
 electron-launcher: $(OBJ_DIR)/main.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a
-	$(CXX) --std=c++17 $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o electron-launcher
+	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o build/electron-launcher
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 $(OBJ_DIR)/main.o: src/main.cpp | $(OBJ_DIR)
-	$(CXX) --std=c++17 $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp
+	$(CXX) $(CXXFLAGS) $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp
 
 $(OBJ_DIR)/zip.o: src/lib/zip/src/zip.c src/lib/zip/src/zip.h src/lib/zip/src/miniz.h | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $(OBJ_DIR)/zip.o -c src/lib/zip/src/zip.c
@@ -33,6 +28,6 @@ src/lib/libui/build/meson-out/libui.a:
 
 .PHONY: clean
 clean:
-	if [ -d "src/lib/libui/build" ]; then rm -rf src/lib/libui/build; fi
+	rm -rf src/lib/libui/build
 	rm -rf $(OBJ_DIR)
 	

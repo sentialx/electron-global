@@ -1,22 +1,20 @@
 CC             = i686-w64-mingw32-gcc
 CXX            = i686-w64-mingw32-g++
 RES            = i686-w64-mingw32-windres
+CXXFLAGS       = --std=c++11
 CFLAGS         = -Os -fdata-sections -ffunction-sections -Isrc/lib/curl/include -static-libgcc -static-libstdc++ -DCURL_STATICLIB
 CMAKE_COMMANDS = env CFLAGS="-fdata-sections -ffunction-sections" CXXFLAGS="-fdata-sections -ffunction-sections -std=c++17"
 LDFLAGS        = -lm -s -Wl,--gc-sections -static-libgcc -static-libstdc++ -mwindows -lcomctl32 -lole32 -ld2d1 -ldwrite -lws2_32 -lcrypt32 -lpthread -static
 OBJ_DIR        = obj/mingw32
 
-.PHONY: all
-all: electron-launcher.exe
-
 electron-launcher.exe: $(OBJ_DIR)/main.o $(OBJ_DIR)/resources.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a $(OBJ_DIR)/libcurl.a
-	$(CXX) -std=c++17 $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o electron-launcher.exe
+	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o build/electron-launcher.exe
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 $(OBJ_DIR)/main.o: src/main.cpp | $(OBJ_DIR)
-	$(CXX) -std=c++17 $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp
+	$(CXX) $(CXXFLAGS) $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp
 
 $(OBJ_DIR)/resources.o: src/resources.rc | $(OBJ_DIR)
 	$(RES) src/resources.rc $(OBJ_DIR)/resources.o
@@ -46,6 +44,6 @@ src/lib/curl-build-mingw32/lib/libcurl.a:
 
 .PHONY: clean
 clean:
-	if [ -d "src/lib/libui/build" ]; then rm -rf src/lib/libui/build; fi
-	if [ -d "src/lib/curl-build-mingw32" ]; then rm -rf src/lib/curl-build-mingw32; fi
+	rm -rf src/lib/libui/build
+	rm -rf src/lib/curl-build-mingw32
 	rm -rf $(OBJ_DIR)
