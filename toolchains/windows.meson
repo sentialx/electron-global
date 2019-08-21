@@ -1,15 +1,14 @@
 [binaries]
 c = 'i686-w64-mingw32-gcc'
 cpp = 'i686-w64-mingw32-g++'
-pkgconfig = 'pkg-config'
+pkgconfig = 'i686-w64-mingw32-pkg-config'
 exe_wrapper = 'wine'
 windres='i686-w64-mingw32-windres'
 strip='i686-w64-mingw32-strip'
 ar='i686-w64-mingw32-ar'
 
 [properties]
-root = 'i686-w64-mingw32'
-cpp_args = ['-std=c++17']
+needs_exe_wrapper = true
 
 [host_machine]
 system = 'windows'

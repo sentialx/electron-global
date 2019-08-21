@@ -1,7 +1,7 @@
-CC      = gcc
-CXX     = g++
+CC      = clang
+CXX     = clang++
 CFLAGS  = -Os -fdata-sections -ffunction-sections
-LDFLAGS = -lm -lcurl -lpthread -ldl `pkg-config gtk+-3.0 --libs` -s -Wl,--gc-sections
+LDFLAGS = -lm -lcurl -lpthread -ldl `pkg-config gtk+-3.0 --libs` -s -Wl,-dead_strip
 OBJ_DIR = obj/posix
 
 .PHONY: all
@@ -11,7 +11,7 @@ all: electron-launcher
 test: electron-launcher
 
 electron-launcher: $(OBJ_DIR)/main.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a
-	$(CXX) -std=c++17 $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o electron-launcher
+	$(CXX) --std=c++17 $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o electron-launcher
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
