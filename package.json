@@ -1,5 +1,5 @@
 {
-  "name": "electron-runtime",
+  "name": "electron-global",
   "version": "0.0.1",
   "description": "Tool for building lightweight Electron apps",
   "main": "build/index.js",
@@ -10,11 +10,11 @@
     "dev": "tsc --watch"
   },
   "bin": {
-    "electron-runtime": "./build/cli/index.js"
+    "electron-global": "./build/cli/index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sentialx/electron-runtime.git"
+    "url": "git+https://github.com/sentialx/electron-global.git"
   },
   "keywords": [
     "tool",
@@ -27,9 +27,9 @@
   "author": "sentialx <sentialx@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sentialx/electron-runtime/issues"
+    "url": "https://github.com/sentialx/electron-global/issues"
   },
-  "homepage": "https://github.com/sentialx/electron-runtime#readme",
+  "homepage": "https://github.com/sentialx/electron-global#readme",
   "devDependencies": {
     "@types/mkdirp": "^0.5.2",
     "@types/ncp": "^2.0.1",
