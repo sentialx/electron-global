@@ -1,0 +1,33 @@
+CC       = clang
+CXX      = clang++
+CXXFLAGS = --std=c++11
+CFLAGS   = -Os -fdata-sections -ffunction-sections
+LDFLAGS  = -lm -lcurl -lpthread -ldl `pkg-config gtk+-3.0 --libs` -s -Wl,-dead_strip
+OBJ_DIR  = obj/darwin
+
+electron-launcher: $(OBJ_DIR)/main.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a
+	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o build/electron-launcher
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+$(OBJ_DIR)/main.o: src/main.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(CFLAGS) -o $(OBJ_DIR)/main.o -c src/main.cpp
+
+$(OBJ_DIR)/zip.o: src/lib/zip/src/zip.c src/lib/zip/src/zip.h src/lib/zip/src/miniz.h | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)/zip.o -c src/lib/zip/src/zip.c
+
+$(OBJ_DIR)/libui.a: src/lib/libui/build/meson-out/libui.a | $(OBJ_DIR)
+	cp -rf src/lib/libui/build/meson-out/libui.a $(OBJ_DIR)/libui.a
+
+.PHONY: src/lib/libui/build/meson-out/libui.a
+src/lib/libui/build/meson-out/libui.a:
+	cd src/lib/libui;\
+		meson setup build --buildtype=release --default-library=static
+		ninja -C src/lib/libui/build
+
+.PHONY: clean
+clean:
+	rm -rf src/lib/libui/build
+	rm -rf $(OBJ_DIR)
+	

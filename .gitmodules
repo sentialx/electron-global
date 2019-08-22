@@ -1,0 +1,12 @@
+[submodule "src/lib/libui"]
+	path = src/lib/libui
+	url = https://github.com/andlabs/libui
+[submodule "src/lib/curl"]
+	path = src/lib/curl
+	url = https://github.com/curl/curl
+[submodule "src/lib/zip"]
+	path = src/lib/zip
+	url = https://github.com/kuba--/zip
+[submodule "src/lib/rapidjson"]
+	path = src/lib/rapidjson
+	url = https://github.com/Tencent/rapidjson

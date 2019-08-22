@@ -2,3 +2,8 @@ node_modules
 *.log*
 build
 dist
+target
+electron-launcher*
+obj
+curl-build*
+
