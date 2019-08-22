@@ -293,7 +293,7 @@ int execvp_win32(char *file, char argv[], int *launchError) {
 }
 #endif
 
-int launchElectron(std::string major) {
+int launchElectron() {
 #if defined(WIN32) || defined(_WIN32)
   std::string arg = (dest / "electron.exe").string() + " " ASAR_PATH;
   char *argv = strdup(arg.c_str());
@@ -347,7 +347,15 @@ void downloadThread(void) {
 
   fs::remove(zipPath);
 
-  std::cout << "Done extracting" << std::endl;
+  std::cout << "Launching Electron..." << std::endl;
+
+  int result = launchElectron();
+
+  if (result) {
+    error("Error launching electron");
+    exit(1);
+    return;
+  }
 
   exit(0);
 }
@@ -394,20 +402,19 @@ int main() {
       std::string(1, std::string((std::istreambuf_iterator<char>(ifstream)),
                                  std::istreambuf_iterator<char>())[0]);
 
-  electronVersion = getMatchingVersion(major);
-
-  if (electronVersion == "") {
-    error("Invalid Electron version");
-    return 1;
-  }
-
   binPath = getHomePath(BIN_DIR);
-
-  fs::create_directory(binPath);
-
   dest = binPath / major;
 
+  if (!fs::exists(binPath)) fs::create_directory(binPath);
+
   if (!fs::exists(dest)) {
+    electronVersion = getMatchingVersion(major);
+
+    if (electronVersion == "") {
+      error("Invalid Electron version");
+      return 1;
+    }
+
     initUI();
 
     std::thread thread(downloadThread);
@@ -415,7 +422,7 @@ int main() {
     uiMain();
   } else {
     std::cout << "Launching Electron..." << std::endl;
-    int result = launchElectron(major);
+    int result = launchElectron();
 
     if (result) {
       std::cout << "Error launching Electron" << std::endl;
