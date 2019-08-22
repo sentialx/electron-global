@@ -1,21 +1,22 @@
 {
   "compilerOptions": {
     "outDir": "./build/",
-
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-
     "declaration": true,
-
     "module": "commonjs",
     "target": "es6",
     "sourceMap": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "experimentalDecorators": true
   },
-  "include": ["./src/**/*.ts"]
+  "include": [
+    "./tools/**/*.ts"
+  ]
 }

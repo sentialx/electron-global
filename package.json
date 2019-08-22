@@ -40,15 +40,13 @@
     "@typescript-eslint/eslint-plugin": "^2.0.0",
     "@typescript-eslint/parser": "^2.0.0",
     "commander": "^3.0.0",
-    "eslint": "^6.1.0",
-    "eslint-config-prettier": "^6.0.0",
+    "eslint": "^6.2.1",
+    "eslint-config-prettier": "^6.1.0",
     "eslint-plugin-prettier": "^3.1.0",
     "prettier": "^1.18.2",
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "asar": "^2.0.1",
-    "electron-rebuild": "^1.8.5",
     "mkdirp": "^0.5.1",
     "ncp": "^2.0.0",
     "phin": "^3.4.0",
