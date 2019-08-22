@@ -27,14 +27,17 @@
 #define OS "win32"
 #define HOME_ENV "HOMEPATH"
 #define ELECTRON_VERSION_PATH "electron_version"
+#define ASAR_PATH "resources/app.asar"
 #elif defined(__APPLE__)
 #define OS "darwin"
 #define HOME_ENV "HOME"
 #define ELECTRON_VERSION_PATH "../Resources/electron_version"
+#define ASAR_PATH "../Resources/app.asar"
 #elif defined(__linux__)
 #define OS "linux"
 #define HOME_ENV "HOME"
 #define ELECTRON_VERSION_PATH "electron_version"
+#define ASAR_PATH "resources/app.asar"
 #else
 #error OS not detected
 #endif
@@ -67,6 +70,7 @@ uiProgressBar *progressBar = NULL;
 
 fs::path dest;
 fs::path zipPath;
+fs::path binPath;
 
 std::string electronVersion;
 
@@ -81,6 +85,11 @@ void cancel() {
   fs::remove(zipPath);
 
   exit(0);
+}
+
+void clean() {
+  fs::remove_all(dest);
+  fs::remove(zipPath);
 }
 
 static void showError(void *arg) {
@@ -99,9 +108,6 @@ void error(const char *message, ...) {
   va_end(args);
 
   std::cout << buffer << std::endl;
-
-  fs::remove_all(dest);
-  fs::remove(zipPath);
 
   uiQueueMain(showError, (void *)buffer);
 }
@@ -192,12 +198,14 @@ std::string fetch(const char *url) {
 bool download(std::string url, const char *filename) {
   CURL *curl = curl_easy_init();
   if (!curl) {
+    clean();
     error("Error initializing curl");
     return false;
   }
 
   FILE *file = fopen(filename, "wb");
   if (!file) {
+    clean();
     error("Failed to write to %s", filename);
     return false;
   }
@@ -216,6 +224,7 @@ bool download(std::string url, const char *filename) {
 
   if (response != CURLE_OK) {
     if (response != CURLE_ABORTED_BY_CALLBACK) {
+      clean();
       error("Error downloading %s: %s", filename, curl_easy_strerror(response));
     }
 
@@ -253,9 +262,66 @@ std::string getMatchingVersion(std::string major) {
   return "";
 }
 
-void downloadThread(void) {
-  fs::path binPath = getHomePath(BIN_DIR);
+template <std::size_t N>
+int execvp2(const char *file, const char *const (&argv)[N]) {
+  assert((N > 0) && (argv[N - 1] == nullptr));
 
+  return execvp(file, const_cast<char *const *>(argv));
+}
+
+#ifdef _WIN32
+int execvp_win32(char *file, char argv[], int *launchError) {
+  STARTUPINFO startupInfo;
+  ZeroMemory(&startupInfo, sizeof(startupInfo));
+
+  startupInfo.cb = sizeof(startupInfo);
+
+  PROCESS_INFORMATION processInfo;
+
+  if (!CreateProcess(file, argv, NULL, NULL, FALSE, CREATE_DEFAULT_ERROR_MODE,
+                     NULL, NULL, &startupInfo, &processInfo)) {
+    *launchError = GetLastError();
+    return 1;
+  }
+
+  int result = WaitForSingleObject(processInfo.hProcess, INFINITE);
+
+  CloseHandle(processInfo.hProcess);
+  CloseHandle(processInfo.hThread);
+
+  return result;
+}
+#endif
+
+int launchElectron(std::string major) {
+#if defined(WIN32) || defined(_WIN32)
+  std::string arg = (dest / "electron.exe").string() + " " ASAR_PATH;
+  char *argv = strdup(arg.c_str());
+
+  int launchError;
+  int result =
+      execvp_win32(strdup((dest / "electron.exe").c_str()), argv, &launchError);
+
+  if (launchError) {
+    error("Error %i launching %s", launchError,
+          strdup((dest / "electron.exe").c_str()));
+    result = 1;
+  }
+
+  return result;
+#elif defined(__APPLE__)
+  const char *const argv[] = {(dest / "Electron.app").c_str(), ASAR_PATH,
+                              nullptr};
+  return execvp2((dest / "Electron.app").c_str(), argv);
+#elif defined(__linux__)
+  const char *const argv[] = {(dest / "electron").c_str(), ASAR_PATH, nullptr};
+  return execvp2((dest / "electron").c_str(), argv);
+#else
+#error OS not detected
+#endif
+}
+
+void downloadThread(void) {
   std::string url = "https://github.com/electron/electron/releases/download/v" +
                     electronVersion + "/electron-v" + electronVersion +
                     "-" OS "-" ARCH ".zip";
@@ -272,6 +338,7 @@ void downloadThread(void) {
   std::cout << "Extracting..." << std::endl;
 
   if (!extract(zipPath, dest)) {
+    clean();
     error(
         "An error occurred extracting the downloaded Electron "
         "archive");
@@ -323,8 +390,9 @@ void initUI() {
 int main() {
   std::ifstream ifstream(ELECTRON_VERSION_PATH);
 
-  auto major = std::string((std::istreambuf_iterator<char>(ifstream)),
-                           std::istreambuf_iterator<char>());
+  std::string major =
+      std::string(1, std::string((std::istreambuf_iterator<char>(ifstream)),
+                                 std::istreambuf_iterator<char>())[0]);
 
   electronVersion = getMatchingVersion(major);
 
@@ -333,11 +401,11 @@ int main() {
     return 1;
   }
 
-  fs::path binPath = getHomePath(BIN_DIR);
+  binPath = getHomePath(BIN_DIR);
 
   fs::create_directory(binPath);
 
-  dest = binPath / electronVersion;
+  dest = binPath / major;
 
   if (!fs::exists(dest)) {
     initUI();
@@ -347,6 +415,12 @@ int main() {
     uiMain();
   } else {
     std::cout << "Launching Electron..." << std::endl;
+    int result = launchElectron(major);
+
+    if (result) {
+      std::cout << "Error launching Electron" << std::endl;
+      return 1;
+    }
   }
 
   return 0;
