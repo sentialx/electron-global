@@ -57,5 +57,9 @@
     "phin": "^3.4.0",
     "rimraf": "^3.0.0",
     "semver": "^6.3.0"
-  }
+  },
+  "files": [
+    "build/",
+    "resources/"
+  ]
 }
