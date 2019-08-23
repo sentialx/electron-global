@@ -1,10 +1,11 @@
 # electron-global
 
+[![Travis](https://img.shields.io/travis/com/sentialx/electron-global.svg?style=flat-square)](https://travis-ci.com/sentialx/electron-global)
+[![Downloads](https://img.shields.io/github/downloads/sentialx/electron-global/total.svg?style=flat-square)](https://github.com/sentialx/electron-global/releases)
+[![PayPal](https://img.shields.io/badge/PayPal-Donate-brightgreen?style=flat-square)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VCPPFUAL4R6M6&source=url)
+[![Discord](https://discordapp.com/api/guilds/307605794680209409/widget.png?style=shield)](https://discord.gg/P7Vn4VX)
+
 A tool for building lighweight Electron apps using a global Electron instance.
-
-![image](https://user-images.githubusercontent.com/11065386/63189647-b526eb00-c064-11e9-9280-c2148d8ae99e.png)
-
-(`electron-quick-start` repo built with `electron-global` and `electron-builder`)
 
 # How it works?
 
