@@ -4,9 +4,9 @@ import { promisify } from 'util';
 import { join } from 'path';
 import { promises, createWriteStream, existsSync } from 'fs';
 import * as semver from 'semver';
-import { request } from 'https';
 import * as extract from 'extract-zip';
 import * as rmrf from 'rimraf';
+import { https } from 'follow-redirects';
 
 const pkg = require('../package.json');
 
@@ -59,35 +59,29 @@ export const downloadBinaries = (
       await mkdirp(distPath);
 
       const url = `https://github.com/sentialx/electron-global/releases/download/v${pkg.version}/electron-v${pkg.version}-${os}-ia32.zip`;
+      console.log(url);
       const zipPath = join(distPath, `electron-v${pkg.version}-${os}-ia32.zip`);
 
       await promises.writeFile(versionPath, pkg.version);
 
       const stream = createWriteStream(zipPath);
 
-      const req = request(
-        url,
-        {
-          headers: {
-            'User-Agent': `electron-global/${pkg.version}`,
-          },
-        },
-        res => {
-          res.pipe(stream);
+      const req = https.get(url, res => {
+        res.pipe(stream);
 
-          res.on('end', () => {
-            extract(
-              zipPath,
-              { dir: join(__dirname, `../download/${os}`) },
-              async err => {
-                if (err) return reject(err);
-                rimraf(zipPath);
-                resolve();
-              },
-            );
-          });
-        },
-      );
+        res.on('end', () => {
+          stream.end();
+          extract(
+            zipPath,
+            { dir: join(__dirname, `../download/${os}`) },
+            async err => {
+              if (err) return reject(err);
+              rimraf(zipPath);
+              resolve();
+            },
+          );
+        });
+      });
 
       req.on('error', err => {
         reject(err);
