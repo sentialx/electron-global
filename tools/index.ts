@@ -45,7 +45,8 @@ export const downloadBinaries = (
 ): Promise<void> => {
   return new Promise(
     async (resolve, reject): Promise<void> => {
-      const versionPath = join(__dirname, `../download/${os}/version`);
+      const distPath = join(__dirname, `../download/${os}`);
+      const versionPath = join(distPath, 'version');
 
       if (
         existsSync(versionPath) &&
@@ -54,11 +55,11 @@ export const downloadBinaries = (
         return resolve();
       }
 
+      await rimraf(distPath);
+      await mkdirp(distPath);
+
       const url = `https://github.com/sentialx/electron-global/releases/download/v${pkg.version}/electron-v${pkg.version}-${os}-ia32.zip`;
-      const zipPath = join(
-        __dirname,
-        `../download/${os}/electron-v${pkg.version}-${os}-ia32.zip`,
-      );
+      const zipPath = join(distPath, `electron-v${pkg.version}-${os}-ia32.zip`);
 
       await promises.writeFile(versionPath, pkg.version);
 
