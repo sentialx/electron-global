@@ -51,4 +51,4 @@ deploy:
   on:
     tags: true
     repo: sentialx/electron-global
-    all_branches: true
+    branch: master
