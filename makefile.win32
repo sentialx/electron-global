@@ -7,8 +7,8 @@ CMAKE_COMMANDS = env CFLAGS="-fdata-sections -ffunction-sections" CXXFLAGS="-fda
 LDFLAGS        = -lm -s -Wl,--gc-sections -static-libgcc -static-libstdc++ -mwindows -lcomctl32 -lole32 -ld2d1 -ldwrite -lws2_32 -lcrypt32 -lpthread -static
 OBJ_DIR        = obj/mingw32
 
-electron-launcher.exe: $(OBJ_DIR)/main.o $(OBJ_DIR)/resources.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a $(OBJ_DIR)/libcurl.a
-	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o build/electron-launcher.exe
+electron.exe: $(OBJ_DIR)/main.o $(OBJ_DIR)/resources.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a $(OBJ_DIR)/libcurl.a
+	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o build/electron.exe
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)

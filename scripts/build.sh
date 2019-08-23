@@ -17,11 +17,11 @@ if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
 else
   make -f makefile.linux
   OS="linux"
-  zip -r "build/electron-launcher-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron-launcher"
+  zip -r "build/electron-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron"
 
   # TODO: I need help with it, Travis keeps throwing `ERROR: Could not invoke sanity test executable`
   # make -f makefile.win32 clean
   # make -f makefile.win32
   # OS="win32"
-  # zip -r "build/electron-launcher-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron-launcher.exe"
+  # zip -r "build/electron-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron.exe"
 fi

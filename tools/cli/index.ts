@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
-import { createElectronDistMac } from '..';
+import {
+  createDistMac,
+  createDistWindows,
+  downloadBinaries,
+  createDistLinux,
+} from '..';
 import { DEFAULT_DEST } from '../constants';
 
 program.option('-m, --mac', 'Create Electron dist for macOS.');
@@ -20,7 +25,24 @@ program.parse(process.argv);
 
 (async function(): Promise<void> {
   if (program.mac) {
-    await createElectronDistMac(
+    await downloadBinaries('darwin');
+    await createDistMac(
+      program.projectDir ? program.projectDir : process.cwd(),
+      program.output ? program.output : DEFAULT_DEST,
+    );
+  }
+
+  if (program.windows) {
+    await downloadBinaries('win32');
+    await createDistWindows(
+      program.projectDir ? program.projectDir : process.cwd(),
+      program.output ? program.output : DEFAULT_DEST,
+    );
+  }
+
+  if (program.linux) {
+    await downloadBinaries('linux');
+    await createDistLinux(
       program.projectDir ? program.projectDir : process.cwd(),
       program.output ? program.output : DEFAULT_DEST,
     );

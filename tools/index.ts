@@ -2,8 +2,12 @@ import { ncp } from 'ncp';
 import * as mkp from 'mkdirp';
 import { promisify } from 'util';
 import { join } from 'path';
-import { promises } from 'fs';
+import { promises, createWriteStream } from 'fs';
 import * as semver from 'semver';
+import { request } from 'https';
+import * as extract from 'extract-zip';
+
+const pkg = require('../package.json');
 
 const mkdirp = promisify(mkp);
 const copy = promisify(ncp);
@@ -34,7 +38,96 @@ export const getElectronVersion = async (
   return electronVersion;
 };
 
-export const createElectronDistMac = async (
+export const downloadBinaries = (
+  os: 'win32' | 'linux' | 'darwin',
+): Promise<void> => {
+  return new Promise(
+    async (resolve, reject): Promise<void> => {
+      const url = `https://github.com/sentialx/electron-global/releases/download/v${pkg.version}/electron-v${pkg.version}-${os}-ia32.zip`;
+      const zipPath = join(
+        __dirname,
+        `../download/${os}/electron-v${pkg.version}-${os}-ia32.zip`,
+      );
+
+      const stream = createWriteStream(zipPath);
+
+      const req = request(
+        url,
+        {
+          headers: {
+            'User-Agent': `electron-global/${pkg.version}`,
+          },
+        },
+        res => {
+          res.pipe(stream);
+
+          res.on('end', () => {
+            extract(
+              zipPath,
+              { dir: join(__dirname, `../download/${os}`) },
+              err => {
+                if (err) return reject(err);
+                resolve();
+              },
+            );
+          });
+        },
+      );
+
+      req.on('error', err => {
+        reject(err);
+      });
+    },
+  );
+};
+
+export const createDistWindows = async (
+  baseDir: string,
+  dest: string,
+): Promise<void> => {
+  try {
+    await mkdirp(dest);
+
+    const electronVersion = await getElectronVersion(baseDir);
+
+    await promises.writeFile(
+      join(dest, 'electron_version'),
+      electronVersion.major,
+    );
+
+    await copy(
+      join(__dirname, '../download/win32/electron.exe'),
+      join(dest, 'electron.exe'),
+    );
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+export const createDistLinux = async (
+  baseDir: string,
+  dest: string,
+): Promise<void> => {
+  try {
+    await mkdirp(dest);
+
+    const electronVersion = await getElectronVersion(baseDir);
+
+    await promises.writeFile(
+      join(dest, 'electron_version'),
+      electronVersion.major,
+    );
+
+    await copy(
+      join(__dirname, '../download/linux/electron'),
+      join(dest, 'electron'),
+    );
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+export const createDistMac = async (
   baseDir: string,
   dest: string,
 ): Promise<void> => {
@@ -64,7 +157,7 @@ export const createElectronDistMac = async (
 
     await Promise.all([
       copy(
-        join(__dirname, '../resources/darwin/start.sh'),
+        join(__dirname, '../download/darwin/electron'),
         join(contentsPath, 'MacOS/Electron'),
       ),
       copy(

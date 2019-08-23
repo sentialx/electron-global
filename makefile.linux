@@ -5,8 +5,8 @@ CFLAGS   = -Os -fdata-sections -ffunction-sections
 LDFLAGS  = -lm -lcurl -lpthread -ldl `pkg-config gtk+-3.0 --libs` -s -Wl,--gc-sections
 OBJ_DIR  = obj/linux
 
-electron-launcher: $(OBJ_DIR)/main.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a
-	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o build/electron-launcher
+electron: $(OBJ_DIR)/main.o $(OBJ_DIR)/zip.o $(OBJ_DIR)/libui.a
+	$(CXX) $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(LDFLAGS) -o build/electron
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)

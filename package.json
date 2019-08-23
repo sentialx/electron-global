@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/sentialx/electron-global#readme",
   "devDependencies": {
+    "@types/extract-zip": "^1.6.2",
     "@types/mkdirp": "^0.5.2",
     "@types/ncp": "^2.0.1",
     "@types/node": "^12.7.2",
@@ -47,6 +48,7 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
+    "extract-zip": "^1.6.7",
     "mkdirp": "^0.5.1",
     "ncp": "^2.0.0",
     "phin": "^3.4.0",
