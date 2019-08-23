@@ -59,7 +59,6 @@ export const downloadBinaries = (
       await mkdirp(distPath);
 
       const url = `https://github.com/sentialx/electron-global/releases/download/v${pkg.version}/electron-v${pkg.version}-${os}-ia32.zip`;
-      console.log(url);
       const zipPath = join(distPath, `electron-v${pkg.version}-${os}-ia32.zip`);
 
       await promises.writeFile(versionPath, pkg.version);

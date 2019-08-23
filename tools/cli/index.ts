@@ -24,27 +24,33 @@ program.option(
 program.parse(process.argv);
 
 (async function(): Promise<void> {
-  if (program.mac) {
-    await downloadBinaries('darwin');
-    await createDistMac(
-      program.projectDir ? program.projectDir : process.cwd(),
-      program.output ? program.output : DEFAULT_DEST,
-    );
-  }
+  if (program.mac || program.windows || program.linux) {
+    console.log('Downloading electron-global binaries');
 
-  if (program.windows) {
-    await downloadBinaries('win32');
-    await createDistWindows(
-      program.projectDir ? program.projectDir : process.cwd(),
-      program.output ? program.output : DEFAULT_DEST,
-    );
-  }
+    if (program.mac) {
+      await downloadBinaries('darwin');
+      await createDistMac(
+        program.projectDir ? program.projectDir : process.cwd(),
+        program.output ? program.output : DEFAULT_DEST,
+      );
+    }
 
-  if (program.linux) {
-    await downloadBinaries('linux');
-    await createDistLinux(
-      program.projectDir ? program.projectDir : process.cwd(),
-      program.output ? program.output : DEFAULT_DEST,
-    );
+    if (program.windows) {
+      await downloadBinaries('win32');
+      await createDistWindows(
+        program.projectDir ? program.projectDir : process.cwd(),
+        program.output ? program.output : DEFAULT_DEST,
+      );
+    }
+
+    if (program.linux) {
+      await downloadBinaries('linux');
+      await createDistLinux(
+        program.projectDir ? program.projectDir : process.cwd(),
+        program.output ? program.output : DEFAULT_DEST,
+      );
+    }
+
+    console.log('Done!');
   }
 })();
