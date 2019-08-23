@@ -2,13 +2,15 @@ import { ncp } from 'ncp';
 import * as mkp from 'mkdirp';
 import { promisify } from 'util';
 import { join } from 'path';
-import { promises, createWriteStream } from 'fs';
+import { promises, createWriteStream, existsSync } from 'fs';
 import * as semver from 'semver';
 import { request } from 'https';
 import * as extract from 'extract-zip';
+import * as rmrf from 'rimraf';
 
 const pkg = require('../package.json');
 
+const rimraf = promisify(rmrf);
 const mkdirp = promisify(mkp);
 const copy = promisify(ncp);
 
@@ -43,11 +45,22 @@ export const downloadBinaries = (
 ): Promise<void> => {
   return new Promise(
     async (resolve, reject): Promise<void> => {
+      const versionPath = join(__dirname, `../download/${os}/version`);
+
+      if (
+        existsSync(versionPath) &&
+        (await promises.readFile(versionPath)) === pkg.version
+      ) {
+        return resolve();
+      }
+
       const url = `https://github.com/sentialx/electron-global/releases/download/v${pkg.version}/electron-v${pkg.version}-${os}-ia32.zip`;
       const zipPath = join(
         __dirname,
         `../download/${os}/electron-v${pkg.version}-${os}-ia32.zip`,
       );
+
+      await promises.writeFile(versionPath, pkg.version);
 
       const stream = createWriteStream(zipPath);
 
@@ -65,8 +78,9 @@ export const downloadBinaries = (
             extract(
               zipPath,
               { dir: join(__dirname, `../download/${os}`) },
-              err => {
+              async err => {
                 if (err) return reject(err);
+                rimraf(zipPath);
                 resolve();
               },
             );
@@ -86,6 +100,8 @@ export const createDistWindows = async (
   dest: string,
 ): Promise<void> => {
   try {
+    await rimraf(dest);
+
     await mkdirp(dest);
 
     const electronVersion = await getElectronVersion(baseDir);
@@ -109,6 +125,8 @@ export const createDistLinux = async (
   dest: string,
 ): Promise<void> => {
   try {
+    await rimraf(dest);
+
     await mkdirp(dest);
 
     const electronVersion = await getElectronVersion(baseDir);
@@ -137,6 +155,8 @@ export const createDistMac = async (
       contentsPath,
       'Frameworks/Electron Helper.app/Contents',
     );
+
+    await rimraf(dest);
 
     await mkdirp(dest);
     await mkdirp(join(contentsPath, 'MacOS'));

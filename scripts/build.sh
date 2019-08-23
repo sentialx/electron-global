@@ -14,6 +14,7 @@ export TRAVIS_TAG="v${PACKAGE_VERSION}"
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
   make -f makefile.darwin
   OS="darwin"
+  zip -r "build/electron-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron"
 else
   make -f makefile.linux
   OS="linux"
@@ -25,3 +26,6 @@ else
   # OS="win32"
   # zip -r "build/electron-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron.exe"
 fi
+
+echo $OS
+echo $TRAVIS_TAG
