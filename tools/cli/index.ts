@@ -25,8 +25,6 @@ program.parse(process.argv);
 
 (async function(): Promise<void> {
   if (program.mac || program.windows || program.linux) {
-    console.log('Downloading electron-global binaries');
-
     if (program.mac) {
       await downloadBinaries('darwin');
       await createDistMac(

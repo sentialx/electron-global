@@ -50,18 +50,18 @@ export const downloadBinaries = (
 
       if (
         existsSync(versionPath) &&
-        (await promises.readFile(versionPath)) === pkg.version
+        (await promises.readFile(versionPath, 'utf8')) === pkg.version
       ) {
         return resolve();
       }
+
+      console.log('Downloading electron-global binaries');
 
       await rimraf(distPath);
       await mkdirp(distPath);
 
       const url = `https://github.com/sentialx/electron-global/releases/download/v${pkg.version}/electron-v${pkg.version}-${os}-ia32.zip`;
       const zipPath = join(distPath, `electron-v${pkg.version}-${os}-ia32.zip`);
-
-      await promises.writeFile(versionPath, pkg.version);
 
       const stream = createWriteStream(zipPath);
 
@@ -76,6 +76,7 @@ export const downloadBinaries = (
             async err => {
               if (err) return reject(err);
               rimraf(zipPath);
+              await promises.writeFile(versionPath, pkg.version);
               resolve();
             },
           );
