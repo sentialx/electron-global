@@ -14,11 +14,11 @@ export TRAVIS_TAG="v${PACKAGE_VERSION}"
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
   make -f makefile.darwin
   OS="darwin"
-  zip -r "build/electron-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron"
+  zip "build/electron-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron"
 else
   make -f makefile.linux
   OS="linux"
-  zip -r "build/electron-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron"
+  zip "build/electron-${TRAVIS_TAG}-${OS}-ia32.zip" "build/electron"
 
   # TODO: I need help with it, Travis keeps throwing `ERROR: Could not invoke sanity test executable`
   # make -f makefile.win32 clean
