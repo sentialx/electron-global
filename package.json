@@ -1,6 +1,6 @@
 {
   "name": "electron-global",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Tool for building lightweight Electron apps",
   "main": "build/index.js",
   "scripts": {
