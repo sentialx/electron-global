@@ -12,6 +12,7 @@ A tool for building lighweight Electron apps using a global Electron instance. F
 `electron-global` creates a custom Electron distributable with a small app launcher which checks the app's `package.json` and downloads corresponding `major` version and the newest in case of `minor` and `patch`. The Electron versions are being saved to:
 
 - on macOS and Linux: `~/.electron-global/x`
+- on Windows: `%HOMEPATH%/.electron-global/x`
 
 Where `x` is the major version of Electron (e.g. 6).
 
