@@ -5,13 +5,14 @@
 [![PayPal](https://img.shields.io/badge/PayPal-Donate-brightgreen?style=flat-square)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VCPPFUAL4R6M6&source=url)
 [![Discord](https://discordapp.com/api/guilds/307605794680209409/widget.png?style=shield)](https://discord.gg/P7Vn4VX)
 
-A tool for building lighweight Electron apps using a global Electron instance.
+A tool for building lighweight Electron apps using a global Electron instance. Forget about 100MB for a Hello World app in Electron!
 
 # How it works?
 
 `electron-global` creates a custom Electron distributable with a small app launcher which checks the app's `package.json` and downloads corresponding `major` version and the newest in case of `minor` and `patch`. The Electron versions are being saved to:
 
 - on macOS and Linux: `~/.electron-global/x`
+- on Windows: `%HOMEPATH%/.electron-global/x`
 
 Where `x` is the major version of Electron (e.g. 6).
 
