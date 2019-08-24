@@ -45,10 +45,8 @@ deploy:
   api_key: $GH_TOKEN
   file_glob: true
   draft: true
+  on:
+    tags: true
   file: 
     - build/*.zip
   skip_cleanup: true
-  on:
-    tags: true
-    repo: sentialx/electron-global
-    branch: master
