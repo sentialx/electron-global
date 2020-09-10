@@ -103,7 +103,7 @@ export const createDistWindows = async (
 
     await promises.writeFile(
       join(dest, 'electron_version'),
-      electronVersion.major,
+      electronVersion.major.toString(),
     );
 
     await copy(
