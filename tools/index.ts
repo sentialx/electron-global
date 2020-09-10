@@ -184,6 +184,8 @@ export const createDistMac = async (
         join(helperContentsPath, 'Info.plist'),
       ),
     ]);
+    
+    promises.chmod(join(contentsPath, 'MacOS/Electron'), 0o755) 
   } catch (e) {
     console.log(e);
   }
