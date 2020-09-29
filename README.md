@@ -56,3 +56,9 @@ Options:
   --projectDir, --project  The path to project directory. Defaults to current working directory.
   -h, --help               output usage information
 ```
+
+# Known limitations
+
+- `electronDist` also applies to rebuilding native modules, therefore these won't work.
+- It does not remove unused Electron versions.
+- Apps will be listed in task managers as Electron, not as processes with the actual app name and icon.
